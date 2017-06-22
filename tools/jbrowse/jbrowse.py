@@ -5,6 +5,7 @@ import argparse
 import subprocess
 import hashlib
 import struct
+import datetime
 import tempfile
 import shutil
 import json
@@ -14,6 +15,7 @@ import logging
 from collections import defaultdict
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger('jbrowse')
+TODAY = datetime.datetime.now().strftime("%Y-%m-%d")
 
 
 class ColorScaling(object):
@@ -506,23 +508,29 @@ class JbrowseConnector(object):
 
 
     def process_annotations(self, track):
+        category = track['category'].replace('#date#', TODAY)
         outputTrackConfig = {
             'style': {
                 'label':       track['style'].get('label', 'description'),
                 'className':   track['style'].get('className', 'feature'),
                 'description': track['style'].get('description', ''),
             },
-            'category': track['category'],
+            'category': category,
         }
 
         for i, (dataset_path, dataset_ext, track_human_label) in enumerate(track['trackfiles']):
-            log.info('Processing %s / %s', track['category'], track_human_label)
+            log.info('Processing %s / %s', category, track_human_label)
             outputTrackConfig['key'] = track_human_label
             # We add extra data to hash for the case of REST + SPARQL.
             try:
                 rest_url = track['conf']['options']['url']
             except KeyError:
                 rest_url = ''
+
+            # I chose to use track['category'] instead of 'category' here. This
+            # is intentional. This way re-running the tool on a different date
+            # will not generate different hashes and make comparison of outputs
+            # much simpler.
             hashData = [dataset_path, track_human_label, track['category'], rest_url]
             outputTrackConfig['label'] = hashlib.md5('|'.join(hashData)).hexdigest() + '_%s' % i
 
@@ -616,7 +624,7 @@ class JbrowseConnector(object):
 
         # http://unix.stackexchange.com/a/38691/22785
         # JBrowse releases come with some broken symlinks
-        cmd = ['find', destination, '-type', 'l', '-xtype', 'l', '-exec', 'rm', "'{}'", '+']
+        cmd = ['find', destination, '-type', 'l', '-xtype', 'l', '-exec', 'rm', "{}", '+']
         log.debug(' '.join(cmd))
         subprocess.check_call(cmd)
 
