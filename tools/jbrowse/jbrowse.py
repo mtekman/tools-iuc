@@ -481,7 +481,7 @@ class JbrowseConnector(object):
 
     def add_bigwig(self, data, trackData, wiggleOpts, **kwargs):
         dest = os.path.join('data', 'raw', trackData['label'] + '.bw')
-        cmd = ['ln', data, dest]
+        cmd = ['ln', '-s', data, dest]
         self.subprocess_check_call(cmd)
 
         url = os.path.join('raw', trackData['label'] + '.bw')
@@ -633,8 +633,25 @@ class JbrowseConnector(object):
             'category': category,
         }
 
-        for i, (dataset_path, dataset_ext, track_human_label, extra_metadata) in enumerate(track['trackfiles']):
-            log.info('Processing %s / %s', category, track_human_label)
+        mapped_chars = {
+            '>': '__gt__',
+            '<': '__lt__',
+            "'": '__sq__',
+            '"': '__dq__',
+            '[': '__ob__',
+            ']': '__cb__',
+            '{': '__oc__',
+            '}': '__cc__',
+            '@': '__at__',
+            '#': '__pd__'
+        }
+
+        for i, (dataset_path, dataset_ext, track_human_label) in enumerate(track['trackfiles']):
+            # Unsanitize labels (element_identifiers are always sanitized by Galaxy)
+            for key, value in mapped_chars.items():
+                track_human_label = track_human_label.replace(value, key)
+
+            log.info('Processing %s / %s', track['category'], track_human_label)
             outputTrackConfig['key'] = track_human_label
             # We add extra data to hash for the case of REST + SPARQL.
             try:
