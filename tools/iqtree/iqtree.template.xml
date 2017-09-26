@@ -1,0 +1,24 @@
+<tool id="iqtree_1" name="IQtree" version="1.5.5" >
+  <description>Efficient phylogenomic software by maximum likelihood</description>
+  <command>
+  </command>
+
+  <inputs>
+  </inputs>
+
+  <outputs>
+    <!-- Output files are given by the '-o' and '-pre' switches set to OUT and PREF, respectively -->
+    <collection name="iqtree_out">
+      <discover_datasets pattern="((OUT|PREF).*)" format="text" />
+    </collection>
+  </outputs>
+  
+  <tests>
+    <test>
+    </test>
+  </tests>
+
+  <help>
+More information can be found here: http://www.iqtree.org/doc/
+  </help>
+</tool>

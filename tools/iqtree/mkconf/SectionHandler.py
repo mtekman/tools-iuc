@@ -5,6 +5,15 @@ from xml.dom import minidom
 doc = minidom.Document()
 root = doc.createElement('root')
 
+
+flag_map = {} # -f --> {type, value}
+
+exclude_map = {     # -f -> defaults to set in command, but not show in opts
+    '-pre' : 'PRE',
+    '-o'   : 'OUT',
+    '-h'   : False
+}
+
 class Section:
 
     def __init__(self, title):
@@ -24,27 +33,36 @@ class Section:
         sect.setAttribute('title', self.title )
         sect.setAttribute('expanded', "true" if expanded else "false")
 
-        for flag in self.arg_map:
+        for flag in self.arg_map:           
             param = self.makeFlag(flag)
+
+            if flag in exclude_map:
+                #import pdb; pdb.set_trace()                
+                continue
+            
             sect.appendChild( param )
 
-        #print(self.title)
-        #import pdb; pdb.set_trace()
-        print(sect.toprettyxml())
+        if len(sect.childNodes) > 0:          
+            print(sect.toprettyxml())
 
     
-        
-		
+        		
     def insertFlag(self, flag, flag_params, text):
         flag = flag.strip()
+      
         if flag not in self.arg_map:
             self.arg_map[flag] = []
 
-        self.arg_map[flag].append(  (flag_params, text)  )
+        self.arg_map[flag].append( (flag_params, text) )
 
         
     def makeFlag(self,flag):
         flag_type, defaultval = self.resolveFlagType(flag)
+
+        # Also append to <command> flag_map
+        if flag not in flag_map:
+            flag_map[flag] = (flag_type, defaultval, self.arg_map[flag][0][1])
+        
 
         if flag_type == "boolean":
             return self.makeBoolean(flag, defaultval)
@@ -134,13 +152,15 @@ class Section:
                         
 
 
-    def __makeSingle(self,flag):
+    def __makeSingle(self,flag, optional = True):
         flag_params, text = self.arg_map[flag][0] # first and only
 
         param = doc.createElement('param')
         param.setAttribute('argument', flag )
         param.setAttribute('label', Section.getLabel(text) )
         param.setAttribute('help', text)
+        if optional:
+            param.setAttribute('optional', "true")
         return param
 
         
@@ -148,6 +168,8 @@ class Section:
         param = self.__makeSingle(flag)
         param.setAttribute('type', 'boolean')
         param.setAttribute('value', defaultval if defaultval!=None else "false" )
+        param.setAttribute('truevalue', flag)
+        param.setAttribute('falsevalue', flag)
         return param
 
     def makeText(self, flag, defaultval = None):
@@ -210,12 +232,13 @@ class Section:
 
             conditional = doc.createElement('conditional')
             conditional.setAttribute('name','cond_model')
-            conditional.setAttribute('title', 'Model Parameters')
+            #conditional.setAttribute('title', 'Model Parameters')
 
             param_bool = doc.createElement('param')
             param_bool.setAttribute('name',  'opt_custommodel' )
             param_bool.setAttribute('label', 'Use Custom Model' )
             param_bool.setAttribute('help',  'See http://www.iqtree.org/doc/Substitution-Models')
+            param_bool.setAttribute('type', 'boolean')
             param_bool.setAttribute('value', 'false')
 
             when_false = doc.createElement('when')
