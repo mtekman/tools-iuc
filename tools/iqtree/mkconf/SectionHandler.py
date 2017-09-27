@@ -14,11 +14,19 @@ exclude_map = {     # -f -> defaults to set in command, but not show in opts
     '-h'   : False
 }
 
+title_map = {}
+
 class Section:
 
     def __init__(self, title):
         self.title = title
         self.name  = '_'.join(title.split()[:2]).lower()
+
+        if self.name in title_map:
+            self.name = self.name + "-X"
+
+        title_map[self.name] = True
+        
         self.arg_map = {} # flag :- param
         self.root = doc.createElement('section')
     #    self.isSub = False   # Main params, sub params (DataType,FreqType, etc)
@@ -62,7 +70,7 @@ class Section:
             
             sect.appendChild( param )
 
-        if len(sect.childNodes) > 0:          
+        if len(sect.childNodes) > 0:
             return sect
 
         return ""
@@ -290,7 +298,7 @@ class Section:
 
             param_true = doc.createElement('param')
             param_true.setAttribute('type', 'text')
-            param_true.setAttribute('value', 'Model')
+            param_true.setAttribute('label', 'Model')
             param_true.setAttribute('argument', '-m')
 
             when_true.appendChild(param_true)

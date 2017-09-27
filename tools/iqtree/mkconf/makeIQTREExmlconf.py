@@ -39,13 +39,15 @@ class Document2Section:
 
             # Unique headers for multiple tables under the same header
             while title in h2_map:
-                title = title + '-X-'
-            h2_map[title] = True
+                title = title + '-X'
+                
 
             if tmp_section != None:
                 sect_xml = tmp_section.getSection()
                 if sect_xml != "":
                     inputs.appendChild(sect_xml)
+                    h2_map[title] = True  # add to title map on non-empty sections
+                                
 
 
             # New section
