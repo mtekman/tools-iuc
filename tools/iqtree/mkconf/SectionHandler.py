@@ -27,7 +27,28 @@ class Section:
     #   self.isSub = True
     #   self.sub_type = name
 
-    def printSection(self, expanded=False):
+    # def printSection(self, expanded=False):
+    #     sect = self.root
+    #     sect.setAttribute('name',  self.name  )
+    #     sect.setAttribute('title', self.title )
+    #     sect.setAttribute('expanded', "true" if expanded else "false")
+
+    #     for flag in self.arg_map:           
+    #         param = self.makeFlag(flag)
+
+    #         if flag in exclude_map:
+    #             #import pdb; pdb.set_trace()                
+    #             continue
+            
+    #         sect.appendChild( param )
+
+    #     if len(sect.childNodes) > 0:          
+    #         return sect.toprettyxml()
+
+    #     return ""
+
+
+    def getSection(self, expanded=False):
         sect = self.root
         sect.setAttribute('name',  self.name  )
         sect.setAttribute('title', self.title )
@@ -37,13 +58,12 @@ class Section:
             param = self.makeFlag(flag)
 
             if flag in exclude_map:
-                #import pdb; pdb.set_trace()                
                 continue
             
             sect.appendChild( param )
 
         if len(sect.childNodes) > 0:          
-            return sect.toprettyxml()
+            return sect
 
         return ""
 

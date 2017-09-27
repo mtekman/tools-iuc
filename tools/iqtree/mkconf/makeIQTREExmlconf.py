@@ -10,8 +10,8 @@ class Document2Section:
     def __init__(self, html_file):
         
         with open(html_file, 'r') as f:
-            html = f.read()            
-            self.xml_text = Document2Section.parse(html)
+            html = f.read()
+            self.inputs = Document2Section.parse(html)
 
 
     @staticmethod
@@ -25,6 +25,8 @@ class Document2Section:
         h2_map = {}
 
         return_text=""
+
+        inputs = doc.createElement('inputs')
           
         for table in tables:
             # Previous H1
@@ -41,7 +43,10 @@ class Document2Section:
             h2_map[title] = True
 
             if tmp_section != None:
-                return_text += tmp_section.printSection()
+                sect_xml = tmp_section.getSection()
+                if sect_xml != "":
+                    inputs.appendChild(sect_xml)
+
 
             # New section
             tmp_section = Section(title)
@@ -96,13 +101,41 @@ class Document2Section:
 
 
         # Print final
-        return return_text + tmp_section.printSection()
+        sect_xml = tmp_section.getSection()
+        if sect_xml != "":
+            inputs.appendChild(sect_xml)
+
+        return inputs
 
 
 
-d = Document2Section(sys.argv[1])
-print(d.xml_text)
+dd = Document2Section(sys.argv[1])
+cc = CommandParse(flag_map, exclude_map)
 
-#cc = CommandParse(flag_map, exclude_map)
+with open('iqtree.macros.xml','w') as f:
+
+    macros = doc.createElement('macros')
+    
+    xml_inp = doc.createElement('xml')
+    xml_inp.setAttribute('name', 'inputs')
+
+    xml_com = doc.createElement('xml')
+    xml_com.setAttribute('name', 'command')
+
+    command = doc.createElement('command')   
+    command.appendChild(
+        doc.createTextNode(cc.text)
+    )
+
+
+    xml_inp.appendChild(dd.inputs)
+    xml_com.appendChild(command)
+
+    macros.appendChild(xml_inp)
+    macros.appendChild(xml_com)
+    
+    print(macros.toprettyxml(), file=f)
+   
+    f.close()
 
 #import pdb;pdb.set_trace()
