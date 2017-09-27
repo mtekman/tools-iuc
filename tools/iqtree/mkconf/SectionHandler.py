@@ -43,7 +43,9 @@ class Section:
             sect.appendChild( param )
 
         if len(sect.childNodes) > 0:          
-            print(sect.toprettyxml())
+            return sect.toprettyxml()
+
+        return ""
 
     
         		
@@ -82,9 +84,18 @@ class Section:
 
 
     @staticmethod
-    def getLabel(text):
-        return text.split('. ')[0]
+    def getLabelHelp(text):
+        arr = text.split('. ')
+        label = arr[0] + ". "
 
+        helps = text[len(label):].strip()
+
+        # Hide default text
+        if len(helps.split("FAULT:")) > 1:
+            helps=""
+        
+        return arr[0], helps
+    
 
     def resolveFlagType(self, flag):
         array = self.arg_map[flag]
@@ -139,13 +150,13 @@ class Section:
                     except ValueError:
                         pass
 
-            return None
+            return ""
 
 
         type_of = determineType(words,text)
         default = determineDefault(type_of, words )
 
-        if type_of == "integer" and default!=None:
+        if type_of == "integer" and default!="":
             default = int(default)
         
         return (type_of, str(default))
@@ -155,36 +166,46 @@ class Section:
     def __makeSingle(self,flag, optional = True):
         flag_params, text = self.arg_map[flag][0] # first and only
 
+        label, helper = Section.getLabelHelp(text)
+        
         param = doc.createElement('param')
         param.setAttribute('argument', flag )
-        param.setAttribute('label', Section.getLabel(text) )
-        param.setAttribute('help', text)
+        param.setAttribute('label',  label )
+
+        if helper != "":
+            param.setAttribute('help', helper)
+            
         if optional:
             param.setAttribute('optional', "true")
+            
         return param
 
         
-    def makeBoolean(self, flag, defaultval = None):
+    def makeBoolean(self, flag, defaultval = ""):
         param = self.__makeSingle(flag)
         param.setAttribute('type', 'boolean')
-        param.setAttribute('value', defaultval if defaultval!=None else "false" )
+        param.setAttribute('value', defaultval if (defaultval != "") else "false" )
         param.setAttribute('truevalue', flag)
-        param.setAttribute('falsevalue', flag)
+        param.setAttribute('falsevalue', "")
         return param
 
-    def makeText(self, flag, defaultval = None):
+    def makeText(self, flag, defaultval = ""):
         param = self.__makeSingle(flag)
         param.setAttribute('type', 'text')
-        if defaultval!=None:
+
+        if defaultval != "":
             param.setAttribute('value',defaultval)
+
         return param
 
 
-    def makeNumber(self, flag, typer, default=None):
+    def makeNumber(self, flag, typer, default = ""):
         param = self.__makeSingle(flag)
         param.setAttribute('type', typer)
-        if default != None:
+
+        if default != "":
             param.setAttribute('value', default)
+        
         return param
 
 
@@ -215,7 +236,7 @@ class Section:
             
         
 
-    def makeSelect(self,flag, defaultval = None):
+    def makeSelect(self,flag, defaultval = ""):
 
         # Regular section
         opts = [x[0][0] for x in self.arg_map[flag]]

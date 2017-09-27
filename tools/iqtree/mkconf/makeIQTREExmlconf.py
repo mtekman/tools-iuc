@@ -100,7 +100,8 @@ class Document2Section:
 
 
 
-Document2Section(sys.argv[1])
+d = Document2Section(sys.argv[1])
+print(d.xml_text)
 
 #cc = CommandParse(flag_map, exclude_map)
 
