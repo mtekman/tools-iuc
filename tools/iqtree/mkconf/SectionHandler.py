@@ -75,15 +75,15 @@ class Section:
 
         return ""
 
-    
         		
-    def insertFlag(self, flag, flag_params, text):
+    def insertFlag(self, flag, flag_params, text, codes):
         flag = flag.strip()
-      
+
+        # Some flags can be specified more than once in the spec
         if flag not in self.arg_map:
             self.arg_map[flag] = []
 
-        self.arg_map[flag].append( (flag_params, text) )
+        self.arg_map[flag].append( (flag_params, text, codes) )
 
         
     def makeFlag(self,flag):
@@ -129,14 +129,19 @@ class Section:
         array = self.arg_map[flag]
 
         if len(array)>1:
-            return ('select',None)
+            return ('select',"")
 
-        fparam, text = array[0]
+        fparam, text, codes = array[0]
         text = text.lower()
         words = text.split()
 
         def determineType(words, text):
+
             if words[0] == "specify":
+                if text.find(" either")!=-1:
+                        return "select"
+                
+                
                 if text.find("list of")!=-1:
                     return "text"
     
@@ -192,7 +197,7 @@ class Section:
 
 
     def __makeSingle(self,flag, optional = True):
-        flag_params, text = self.arg_map[flag][0] # first and only
+        flag_params, text, codes = self.arg_map[flag][0] # first and only
 
         label, helper = Section.getLabelHelp(text)
         
@@ -247,7 +252,11 @@ class Section:
         param = doc.createElement('param')
         param.setAttribute('type', 'select')
         param.setAttribute('argument', title)
-        param.setAttribute('help', helper)
+
+        label, helps = Section.getLabelHelp(helper)
+
+        param.setAttribute('label', label)
+        param.setAttribute('help', helps)
 
         #import pdb; pdb.set_trace()
         
@@ -267,10 +276,20 @@ class Section:
     def makeSelect(self,flag, defaultval = ""):
 
         # Regular section
-        opts = [x[0][0] for x in self.arg_map[flag]]
-        hlps = '\n'.join([x[0][0]+' : '+x[1] for x in self.arg_map[flag]])
+        try:        
+            opts = [x[0][0] for x in self.arg_map[flag]]
+            hlps = self.arg_map[flag][0][1]  + '\n'.join([x[0][0]+' : '+x[1] for x in self.arg_map[flag]])
+
+            #import pdb;pdb.set_trace()
+        except TypeError:
+            # None type is not subscriptable, use codes
+            opts = [x.text for x in self.arg_map[flag][0][2] if not(x.text.startswith(flag))]
+            hlps = self.arg_map[flag][0][1]
+            #print("TEST", flag, file=sys.stderr)
+
 
         # Too exhausting to parse everything, give custom and point to man
+
         param = self.__makeSelect(flag, opts, hlps)
         
         if flag == '-m':

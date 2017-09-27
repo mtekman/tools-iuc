@@ -73,6 +73,7 @@ class Document2Section:
 
             try:
                 helps = [tr.td.nextSibling.text for tr in tbody.findAll('tr')]
+                codes = [tr.td.nextSibling.findAll('code') for tr in tbody.findAll('tr')]               
                 flags = []
 
                 if not(datatype_table):       
@@ -88,9 +89,9 @@ class Document2Section:
                 print("Table mismatch", file=sys.stderr)
                 exit(-1)
 
-            flag_helper = list(zip(flags, helps))
+            flag_helper = list(zip(flags, helps, codes))
 
-            for flag, helper in flag_helper:    
+            for flag, helper, codelist in flag_helper:    
                 parts = flag.split(' ')
                 flag = parts[0]
                 flag_params = None
@@ -99,7 +100,7 @@ class Document2Section:
                     flag_params = parts[1:]
 
                 #flag, flag_params, short, help
-                tmp_section.insertFlag(flag, flag_params, helper)
+                tmp_section.insertFlag(flag, flag_params, helper, codelist)
 
 
         # Print final

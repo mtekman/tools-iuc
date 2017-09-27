@@ -3,7 +3,14 @@
 		<inputs>
 			<section expanded="false" name="general_options" title="General options">
 				<param argument="-s" label="Specify input alignment file in PHYLIP, FASTA, NEXUS, CLUSTAL or MSF format." optional="true" type="data"/>
-				<param argument="-st" help="This is only necessary if IQ-TREE did not detect the sequence type correctly. Note that -st CODON is always necessary when using codon models (otherwise, IQ-TREE applies DNA models) and you also need to specify a genetic code like this if differed from the standard genetic code. -st NT2AA tells IQ-TREE to translate protein-coding DNA into AA sequences and then subsequent analysis will work on the AA sequences. You can also use a genetic code like -st NT2AA5 for the Invertebrate Mitochondrial Code (see genetic code table)." label="Specify sequence type as either of DNA, AA, BIN, MORPH, CODON or NT2AA for DNA, amino-acid, binary, morphological, codon or DNA-to-AA-translated sequences" optional="true" type="text"/>
+				<param argument="-st" help="This is only necessary if IQ-TREE did not detect the sequence type correctly. Note that -st CODON is always necessary when using codon models (otherwise, IQ-TREE applies DNA models) and you also need to specify a genetic code like this if differed from the standard genetic code. -st NT2AA tells IQ-TREE to translate protein-coding DNA into AA sequences and then subsequent analysis will work on the AA sequences. You can also use a genetic code like -st NT2AA5 for the Invertebrate Mitochondrial Code (see genetic code table)." label="Specify sequence type as either of DNA, AA, BIN, MORPH, CODON or NT2AA for DNA, amino-acid, binary, morphological, codon or DNA-to-AA-translated sequences" type="select">
+					<option value="DNA">DNA</option>
+					<option value="AA">AA</option>
+					<option value="BIN">BIN</option>
+					<option value="MORPH">MORPH</option>
+					<option value="CODON">CODON</option>
+					<option value="NT2AA">NT2AA</option>
+				</param>
 				<param argument="-t" label="Specify a file containing starting tree for tree search" optional="true" type="data"/>
 				<param argument="-te" falsevalue="" help="That means, no tree search is performed and IQ-TREE computes the log-likelihood of the fixed user tree." label="Like -t but fixing user tree" optional="true" truevalue="-te" type="boolean" value="false"/>
 				<param argument="-nt" help="A special option -nt AUTO will tell IQ-TREE to automatically determine the best number of cores given the current data and computer." label="Specify the number of CPU cores for iqtree-omp version" optional="true" type="integer"/>
@@ -28,17 +35,17 @@
 				<conditional name="cond_model">
 					<param help="See http://www.iqtree.org/doc/Substitution-Models" label="Use Custom Model" name="opt_custommodel" type="boolean" value="false"/>
 					<when value="true">
-						<param argument="-m" type="text" value="Model"/>
+						<param argument="-m" label="Model" type="text"/>
 					</when>
 					<when value="false">
-						<param argument="-m" help="TESTONLY : Perform standard model selection like jModelTest (for DNA) and ProtTest (for protein). Moreover, IQ-TREE also works for codon, binary and morphogical data.
+						<param argument="-m" help="Moreover, IQ-TREE also works for codon, binary and morphogical data.TESTONLY : Perform standard model selection like jModelTest (for DNA) and ProtTest (for protein). Moreover, IQ-TREE also works for codon, binary and morphogical data.
 TEST : Like -m TESTONLY but immediately followed by tree reconstruction using the best-fit model found. So this performs both model selection and tree inference within a single run.
 TESTNEWONLY : Perform an extended model selection that additionally includes FreeRate model compared with -m TESTONLY. Recommended as replacement for -m TESTONLY. Note that LG4X is a FreeRate model, but by default is not included because it is also a protein mixture model. To include it, use -madd option (see table below).
 TESTNEW : Like -m MF but immediately followed by tree reconstruction using the best-fit model found.
 TESTMERGEONLY : Select best-fit partitioning scheme like PartitionFinder.
 TESTMERGE : Like -m TESTMERGEONLY but immediately followed by tree reconstruction using the best partitioning scheme found.
 TESTNEWMERGEONLY : Like -m TESTMERGEONLY but additionally includes FreeRate model.
-TESTNEWMERGE : Like -m MF+MERGE but immediately followed by tree reconstruction using the best partitioning scheme found." type="select">
+TESTNEWMERGE : Like -m MF+MERGE but immediately followed by tree reconstruction using the best partitioning scheme found." label="Perform standard model selection like jModelTest (for DNA) and ProtTest (for protein)" type="select">
 							<option value="TESTONLY">TESTONLY</option>
 							<option value="TEST">TEST</option>
 							<option value="TESTNEWONLY">TESTNEWONLY</option>
@@ -51,24 +58,33 @@ TESTNEWMERGE : Like -m MF+MERGE but immediately followed by tree reconstruction 
 					</when>
 				</conditional>
 			</section>
-			<section expanded="false" name="automatic_model" title="Automatic model selection-X-">
+			<section expanded="false" name="automatic_model-X" title="Automatic model selection-X">
 				<param argument="-rcluster" help="This is similar to --rcluster-percent option of PartitionFinder. For example, with -rcluster 10 only the top 10% partition schemes are considered to save computations." label="Specify the percentage for the relaxed clustering algorithm (Lanfear et al., 2014)" optional="true" type="text"/>
 				<param argument="-mset" help="Alternatively, one can specify a comma-separated list of base models. For example, -mset WAG,LG,JTT will restrict model selection to WAG, LG, and JTT instead of all 18 AA models to save computations." label="Specify the name of a program (raxml, phyml or mrbayes) to restrict to only those models supported by the specified program" optional="true" type="text"/>
-				<param argument="-msub" label="Specify either nuclear, mitochondrial, chloroplast or viral to restrict to those AA models designed for specified source." optional="true" type="text"/>
+				<param argument="-msub" help="" label="Specify either nuclear, mitochondrial, chloroplast or viral to restrict to those AA models designed for specified source." type="select">
+					<option value="nuclear">nuclear</option>
+					<option value="mitochondrial">mitochondrial</option>
+					<option value="chloroplast">chloroplast</option>
+					<option value="viral">viral</option>
+				</param>
 				<param argument="-mfreq" label="Specify a comma-separated list of frequency types for model selection" optional="true" type="text"/>
 				<param argument="-mrate" label="Specify a comma-separated list of rate heterogeneity types for model selection" optional="true" type="text"/>
 				<param argument="-cmin" label="Specify minimum number of categories for FreeRate model" optional="true" type="integer" value="2"/>
 				<param argument="-cmax" label="Specify maximum number of categories for FreeRate model" optional="true" type="integer" value="10"/>
-				<param argument="-merit" label="Specify either AIC, AICc or BIC for the optimality criterion to apply for new procedure" optional="true" type="text"/>
+				<param argument="-merit" help="" label="Specify either AIC, AICc or BIC for the optimality criterion to apply for new procedure" type="select">
+					<option value="AIC">AIC</option>
+					<option value="AICc">AICc</option>
+					<option value="BIC">BIC</option>
+				</param>
 				<param argument="-mtree" falsevalue="" label="Turn on full tree search for each model considered, to obtain more accurate result" optional="true" truevalue="-mtree" type="boolean" value="false"/>
 				<param argument="-mredo" falsevalue="" label="Ignore .model file computed earlier" optional="true" truevalue="-mredo" type="boolean" value="false"/>
 				<param argument="-madd" help="For example, -madd LG4M,LG4X to additionally include these two protein mixture models." label="Specify a comma-separated list of mixture models to additionally consider for model selection" optional="true" type="text"/>
 				<param argument="-mdef" label="Specify a NEXUS model file to define new models." optional="true" type="data"/>
 			</section>
-			<section expanded="false" name="specifying_substitution" title="Specifying substitution models-X--X-">
+			<section expanded="false" name="specifying_substitution-X" title="Specifying substitution models-X">
 				<param argument="-mwopt" falsevalue="" help="Note that for models like LG+C20+F+G this mode is automatically turned on, but not for LG+C20+G." label="Turn on optimizing weights of mixture models" optional="true" truevalue="-mwopt" type="boolean" value="false"/>
 			</section>
-			<section expanded="false" name="rate_heterogeneity-x-" title="Rate heterogeneity-X-">
+			<section expanded="false" name="rate_heterogeneity-x" title="Rate heterogeneity-X">
 				<param argument="-a" label="Specify the Gamma shape parameter (default: estimate)" optional="true" type="text"/>
 				<param argument="-gmedian" falsevalue="" label="Perform the median approximation for Gamma rate heterogeneity instead of the default mean approximation (Yang, 1994)" optional="true" truevalue="-gmedian" type="boolean" value="false"/>
 				<param argument="-i" label="Specify the proportion of invariable sites (default: estimate)" optional="true" type="text"/>
