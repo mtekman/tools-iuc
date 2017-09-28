@@ -18,31 +18,6 @@ class Section:
        
         self.arg_map = {} # flag :- param
         self.root = doc.createElement('section')
-    #    self.isSub = False   # Main params, sub params (DataType,FreqType, etc)
-
-    #def setSubSection(self, name):
-    #   self.isSub = True
-    #   self.sub_type = name
-
-    # def printSection(self, expanded=False):
-    #     sect = self.root
-    #     sect.setAttribute('name',  self.name  )
-    #     sect.setAttribute('title', self.title )
-    #     sect.setAttribute('expanded', "true" if expanded else "false")
-
-    #     for flag in self.arg_map:           
-    #         param = self.makeFlag(flag)
-
-    #         if flag in exclude_map:
-    #             #import pdb; pdb.set_trace()                
-    #             continue
-            
-    #         sect.appendChild( param )
-
-    #     if len(sect.childNodes) > 0:          
-    #         return sect.toprettyxml()
-
-    #     return ""
 
 
     def getSection(self, expanded=False):
@@ -247,9 +222,12 @@ class Section:
 
         label, helps = Section.getLabelHelp(helper)
 
-        param.setAttribute('label', label)
+        param.setAttribute('label', label)        
         param.setAttribute('help', helps)
 
+        # CData is not supported by xml.minidom
+        #cdata = doc.createElement('help')
+        #cdata.text = "<![CDATA[%s]]>" % helps)
         #import pdb; pdb.set_trace()
         
         for opt_value in opts:
@@ -270,7 +248,9 @@ class Section:
         # Regular section
         try:        
             opts = [x[0][0] for x in self.arg_map[flag]]
-            hlps = self.arg_map[flag][0][1]  + '\n'.join([x[0][0]+' : '+x[1] for x in self.arg_map[flag]])
+            hlps = self.arg_map[flag][0][1]  + (
+                '\n'.join([x[0][0]+' : '+x[1] for x in self.arg_map[flag]])
+            )
 
             #import pdb;pdb.set_trace()
         except TypeError:
