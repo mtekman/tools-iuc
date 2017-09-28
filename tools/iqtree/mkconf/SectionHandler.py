@@ -9,19 +9,13 @@ root = doc.createElement('root')
 
 
 flag_map = {} # -f --> {type, value}
-title_map = {}
 
 class Section:
 
     def __init__(self, title):
         self.title = title
         self.name  = '_'.join(title.split()[:2]).lower()
-
-        if self.name in title_map:
-            self.name = self.name + "-X"
-
-        title_map[self.name] = True
-        
+       
         self.arg_map = {} # flag :- param
         self.root = doc.createElement('section')
     #    self.isSub = False   # Main params, sub params (DataType,FreqType, etc)
