@@ -5,6 +5,8 @@ from SectionHandler import *
 from CommandParse import CommandParse
 
 
+section_map = {} #  title -> section
+
 class Document2Section:
 
     def __init__(self, html_file):
@@ -21,37 +23,29 @@ class Document2Section:
         main_div = bsobj.body.find('div', attrs={'class':'col-md-9'})
         tables = main_div.find_all('table')
         
-        tmp_section = None
-        h2_map = {}
-
         return_text=""
 
         inputs = doc.createElement('inputs')
+
+        section_order = []
           
         for table in tables:
             # Previous H1
             h2 = table.find_previous_sibling('h2')    
-            title = h2.text
+            title = h2.text               
 
-            # DEBUGGING ONLY
-            #if title != "Automatic model selection":
-            #    continue
+            #if tmp_section != None:
+            #    sect_xml = tmp_section.getSection()
+            #    if sect_xml != "":
+            #        inputs.appendChild(sect_xml)
+            #        h2_map[title] = True  # add to title map on non-empty sections
 
-            # Unique headers for multiple tables under the same header
-            while title in h2_map:
-                title = title + '-X'
-                
+            tmp_section = None
+            if title not in section_map:
+                section_map[title] = Section(title)
+                section_order.append(title)
 
-            if tmp_section != None:
-                sect_xml = tmp_section.getSection()
-                if sect_xml != "":
-                    inputs.appendChild(sect_xml)
-                    h2_map[title] = True  # add to title map on non-empty sections
-                                
-
-
-            # New section
-            tmp_section = Section(title)
+            tmp_section = section_map[title]
 
             # Each table is a section
             thead = table.thead
@@ -73,7 +67,7 @@ class Document2Section:
 
             try:
                 helps = [tr.td.nextSibling.text for tr in tbody.findAll('tr')]
-                codes = [tr.td.nextSibling.findAll('code') for tr in tbody.findAll('tr')]               
+                codes = [tr.td.nextSibling.findAll('code') for tr in tbody.findAll('tr')]
                 flags = []
 
                 if not(datatype_table):       
@@ -104,10 +98,11 @@ class Document2Section:
 
 
         # Print final
-        sect_xml = tmp_section.getSection()
-        if sect_xml != "":
-            inputs.appendChild(sect_xml)
-
+        for section in section_order:
+            sect_xml = section_map[section].getSection()
+            if sect_xml != "":
+                inputs.appendChild( sect_xml )
+        
         return inputs
 
 

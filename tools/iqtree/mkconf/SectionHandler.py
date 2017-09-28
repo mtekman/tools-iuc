@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 import sys
 
+from defaults import *
 from xml.dom import minidom
+
 doc = minidom.Document()
 root = doc.createElement('root')
 
 
 flag_map = {} # -f --> {type, value}
-
-exclude_map = {     # -f -> defaults to set in command, but not show in opts
-    '-pre' : 'PRE',
-    '-o'   : 'OUT',
-    '-h'   : False
-}
-
 title_map = {}
 
 class Section:
@@ -67,7 +62,7 @@ class Section:
 
             if flag in exclude_map:
                 continue
-            
+           
             sect.appendChild( param )
 
         if len(sect.childNodes) > 0:
@@ -88,6 +83,9 @@ class Section:
         
     def makeFlag(self,flag):
         flag_type, defaultval = self.resolveFlagType(flag)
+
+        if flag in override_defaults:
+            defaultval = override_defaults[flag]
 
         # Also append to <command> flag_map
         if flag not in flag_map:
