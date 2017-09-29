@@ -166,19 +166,21 @@
     </inputs>
   </xml>
 
+  <!-- DEBUGGING -->
   <xml name="command_weak">
     <command detect_errors="aggressive"><![CDATA[
-    iqtree -s $s -pre $pref -nt AUTO
+    iqtree -s $s -pre PREF -nt AUTO
     ]]>
     </command>
   </xml>
 
   <xml name="command_weak2">
     <command detect_errors="aggressive"><![CDATA[
-    iqtree-omp -s $s -pre $pref -nt AUTO
+    iqtree-omp -s $s -pre PREF -nt AUTO
     ]]>
     </command>
   </xml>
+  <!-- END DEBUGGING -->
 
   
   <xml name="command">

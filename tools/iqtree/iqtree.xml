@@ -13,6 +13,7 @@
   <!-- <expand macro="command" /> -->
   <!-- <expand macro="command_weak" /> -->
   <expand macro="command_weak2" />
+  
   <expand macro="inputs" />
   
   <outputs>
@@ -28,7 +29,6 @@
   <tests>
     <test>
       <param name='s' value='example.phy' />
-      <param name='pref' value='PREF' />
       
       <output name='bionj' file='PREF.bionj' />
       <output name='ckp.gz' file='PREF.ckp.gz' />
