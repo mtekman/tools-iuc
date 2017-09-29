@@ -212,6 +212,7 @@ class Section:
     def makeFile(self,flag):
         param = self.__makeSingle(flag)
         param.setAttribute('type', 'data')
+        param.setAttribute('format', 'plain')
         return param
 
 

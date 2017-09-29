@@ -1,13 +1,14 @@
 <tool id="iqtree_1" name="IQtree" version="0.3" >
+
+  <description>Efficient phylogenomic software by maximum likelihood</description>
+
   <macros>
     <import>iqtree.macros.xml</import>
   </macros>
 
   <requirements>
     <requirement type="package" version="1.5.5">iqtree</requirement>
-  </requirements>
-  
-  <description>Efficient phylogenomic software by maximum likelihood</description>
+  </requirements> 
 
   <expand macro="command" />
   <expand macro="inputs" />
@@ -39,4 +40,10 @@
   <help>
 More information can be found here: http://www.iqtree.org/doc/
   </help>
+
+  <citations>
+    <citation type="doi">10.1093/molbev/msu300</citation>
+    <citation type="doi">10.1093/molbev/mst024</citation>
+  </citations>
+    
 </tool>

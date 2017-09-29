@@ -4,7 +4,6 @@ from bs4 import BeautifulSoup as bs
 from SectionHandler import *	   
 from CommandParse import CommandParse
 
-
 class Document2Section:
 
     def __init__(self, html_file):
@@ -180,7 +179,8 @@ with open('iqtree.macros.xml','w') as f:
     xml_com = doc.createElement('xml')
     xml_com.setAttribute('name', 'command')
 
-    command = doc.createElement('command')   
+    command = doc.createElement('command')
+    command.setAttribute('detect_errors', 'aggressive')
     command.appendChild(
         doc.createTextNode(cc.text)
     )
