@@ -1,23 +1,38 @@
-<tool id="iqtree_1" name="IQtree" version="1.5.5" >
+<tool id="iqtree_1" name="IQtree" version="0.3" >
   <macros>
     <import>iqtree.macros.xml</import>
   </macros>
+
+  <requirements>
+    <requirement type="package" version="1.5.5">iqtree</requirement>
+  </requirements>
+  
   <description>Efficient phylogenomic software by maximum likelihood</description>
 
   <expand macro="command" />
   <expand macro="inputs" />
   
   <outputs>
-    <!-- Output files are given by the '-o' and '-pre' switches set to OUT and PREF, respectively -->
-    <collection name="iqtree_out" type='data' >
-      <discover_datasets pattern="((OUT|PREF).*)" format="text" />
-    </collection>
+    <data name='bionj' format='plain' />
+    <data name='ckp.gz' format='plain' />
+    <data name='log' format='plain' />
+    <data name='iqtree' format='plain' />
+    <data name='mldist' format='plain' />
+    <data name='treefile' format='plain' />
+    <data name='model' format='plain' />    
   </outputs>
 
   <tests>
     <test>
-      <param name='test' value='true' />
-      <output name='out1' file='OUT' />
+      <param name='s' value='example.phy' />
+      <param name='pref' value='PREF' />
+      <output name='bionj' file='PREF.bionj' />
+      <output name='ckp.gz' file='PREF.ckp.gz' />
+      <output name='log' file='PREF.log' />
+      <output name='iqtree' file='PREF.iqtree' />
+      <output name='mldist' file='PREF.mldist' />
+      <output name='treefile' file='PREF.treefile' />
+      <output name='model' file='PREF.model' />
     </test>
   </tests>
 
