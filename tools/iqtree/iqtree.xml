@@ -10,7 +10,9 @@
     <requirement type="package" version="1.5.5">iqtree</requirement>
   </requirements> 
 
-  <expand macro="command" />
+  <!-- <expand macro="command" /> -->
+  <!-- <expand macro="command_weak" /> -->
+  <expand macro="command_weak2" />
   <expand macro="inputs" />
   
   <outputs>
@@ -27,6 +29,7 @@
     <test>
       <param name='s' value='example.phy' />
       <param name='pref' value='PREF' />
+      
       <output name='bionj' file='PREF.bionj' />
       <output name='ckp.gz' file='PREF.ckp.gz' />
       <output name='log' file='PREF.log' />
