@@ -200,8 +200,6 @@
 
     $te
 
-    -o OUT
-
     -pre PRE
 
     -nt AUTO
