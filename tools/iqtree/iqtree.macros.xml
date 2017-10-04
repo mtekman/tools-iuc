@@ -167,19 +167,29 @@
   </xml>
 
   <!-- DEBUGGING -->
-  <xml name="command_weak">
+  <xml name="command_test1">
+    <command detect_errors="aggressive"><![CDATA[
+    iqtree
+    -pre PREF
+    -st $st
+    -nt AUTO
+    -s $s
+    -m $m
+    -msub $msub
+    -madd $madd
+    -merit $merit
+    -bb $bb
+    ]]>
+    </command>
+  </xml>
+  
+  <xml name="command_test2">
     <command detect_errors="aggressive"><![CDATA[
     iqtree -s $s -pre PREF -nt AUTO
     ]]>
     </command>
   </xml>
 
-  <xml name="command_weak2">
-    <command detect_errors="aggressive"><![CDATA[
-    iqtree-omp -s $s -pre PREF -nt AUTO
-    ]]>
-    </command>
-  </xml>
   <!-- END DEBUGGING -->
 
   

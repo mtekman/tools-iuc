@@ -12,41 +12,124 @@
 
   <!-- <expand macro="command" /> -->
   <!-- <expand macro="command_weak" /> -->
-  <expand macro="command_weak2" />
+  <expand macro="command_test1" />
   
   <expand macro="inputs" />
   
   <outputs>
-    <data name='bionj' format='txt' />
-    <data name='ckp.gz' format='txt' />
-    <data name='log' format='txt' />
-    <data name='iqtree' format='txt' />
-    <data name='mldist' format='txt' />
-    <data name='treefile' format='txt' />
-    <data name='model' format='txt' />    
+    <data name='bionj' format='txt' from_work_dir="*.bionj" />
+    <data name='ckp.gz' format='txt' from_work_dir="*.ckp.gz" />
+    <data name='contree' format='txt' from_work_dir="*.contree" />
+    <data name='log' format='txt' from_work_dir="*.log" />
+    <data name='iqtree' format='txt' from_work_dir="*.iqtree" />
+    <data name='mldist' format='txt' from_work_dir="*.mldist" />
+    <data name='treefile' format='txt' from_work_dir="*.treefile" />
+    <data name='model' format='txt' from_work_dir="*.model" />
+    <data name='splits.nex' format='txt' from_work_dir="*.splits.nex" />    
   </outputs>
 
   <tests>
+
     <test>
-      <param name='s' value='example.phy' />
-      
-      <output name='bionj' file='PREF.bionj' ftype="txt" lines_diff="1" >
-	<!-- <assert_contents> -->
-	<!--   <has_text text=".*Human.*Whale.*" /> -->
-	<!-- </assert_contents> -->
-      </output>
-      
-      <output name='ckp.gz' file='PREF.ckp.gz' ftype="txt"/>
-      <output name='log' file='PREF.log' ftype="txt" >
+      <!-- <param name="nt" value="11" /> --> <!-- Number of threads -->
+      <!-- <param name="safe" value="True" /> -->
+      <!-- <param name="st" value="AA" /> -->
+      <param name="s" value="example.phy" />
+      <param name="m" value="TESTNEW" />
+      <param name="msub" value="nuclear" />
+      <param name="madd" value="LG4M,LG4X" />
+      <param name="merit" value="AICc" />
+      <param name="bb" value="2000" />
+
+
+      <output name='bionj' ftype="txt"  >
 	<assert_contents>
-	  <has_text text="Alignment has 17 sequences with 1998 columns and 1152 patterns" />
+	  <has_text_matching expression=".*Human.*Whale.*" />
 	</assert_contents>
       </output>
-      <output name='iqtree' file='PREF.iqtree' ftype="txt"/>
-      <output name='mldist' file='PREF.mldist' ftype="txt"/>
-      <output name='treefile' file='PREF.treefile' ftype="txt"/>
-      <output name='model' file='PREF.model' ftype="txt"/>
+            
+      <output name='iqtree' ftype="txt" >
+	<assert_contents>
+	  <has_text_matching expression="VT+F+R3(\s+((\d|\.)+))+" />
+	</assert_contents>
+      </output>
+      
+      
+      <output name='mldist' ftype="txt" >
+	<assert_contents>
+	  <has_line_matching expression="^Frog(\s+((\d|\.)+))+\s+$" />
+	  <has_line_matching expression="^Whale(\s+((\d|\.)+))+\s+$" />
+	  <has_line_matching expression="^Cow(\s+((\d|\.)+))+\s+$" />
+	</assert_contents>
+      </output>
+
+      <output name='treefile' ftype="txt" >
+      	<assert_contents>
+      	  <has_line_matching
+	      expression="\(LngfishAu:(\d|\..)+,\(LngfishSA:(\d.)+,.*" />
+      	</assert_contents>
+      </output>
+
+      <output name='contree' ftype="txt" >
+      	<assert_contents>
+      	  <has_line_matching
+	      expression="\(LngfishAu:(\d|\..)+,\(LngfishSA:(\d.)+,.*\)\d+:(\d|\.)+,.*" />
+      	</assert_contents>
+      </output>
+
+      <output name='splits.nex' ftype="txt" >
+      	<assert_contents>
+      	  <has_line text="BEGIN Splits;" />
+	  <has_line text="END; [Splits]" />
+      	</assert_contents>
+      </output>
+      
     </test>
+    
+    <!-- <test> -->
+    <!--   <param name='s' value='example.phy' /> -->
+      
+    <!--   <output name='bionj' ftype="txt"  > -->
+    <!-- 	<assert_contents> -->
+    <!-- 	  <has_text_matching expression=".*Human.*Whale.*" /> -->
+    <!-- 	</assert_contents> -->
+    <!--   </output> -->
+      
+    <!--   <!-\- <output name='ckp.gz' ftype="txt"  /> -\-> -->
+      
+    <!--   <!-\- <output name='log' ftype="txt"  > -\-> -->
+    <!--   <!-\- 	<assert_contents> -\-> -->
+    <!--   <!-\- 	  <has_text text="Alignment has 17 sequences with 1998 columns and 1152 patterns" /> -\-> -->
+    <!--   <!-\- 	</assert_contents> -\-> -->
+    <!--   <!-\- </output> -\-> -->
+      
+    <!--   <output name='iqtree' ftype="txt" > -->
+    <!-- 	<assert_contents> -->
+    <!-- 	  <has_text_matching expression=".*Human.*Whale.*" /> -->
+    <!-- 	</assert_contents> -->
+    <!--   </output> -->
+      
+      
+    <!--   <output name='mldist' ftype="txt" > -->
+    <!-- 	<assert_contents> -->
+    <!-- 	  <has_line_matching expression="^Frog(\s+((\d|\.)+))+\s+$" /> -->
+    <!-- 	  <has_line_matching expression="^Whale(\s+((\d|\.)+))+\s+$" /> -->
+    <!-- 	  <has_line_matching expression="^Cow(\s+((\d|\.)+))+\s+$" /> -->
+    <!-- 	</assert_contents> -->
+    <!--   </output> -->
+
+    <!--   <output name='treefile' ftype="txt" > -->
+    <!--   	<assert_contents> -->
+    <!--   	  <has_text_matching expression="\(LngfishAu:(\d|\..)+,\(LngfishSA:(\d.)+,.*" /> -->
+    <!--   	</assert_contents> -->
+    <!--   </output> -->
+
+    <!--   <output name='model' ftype="txt" > -\-> -->
+    <!--   	<assert_contents> -->
+    <!--   	  <has_line_matching expression="^JC\s+\d+(\s(\-|\d|\.)+)+.*" /> -->
+    <!--   	</assert_contents> -->
+    <!--   </output> -->
+    <!-- </test> -->
   </tests>
 
   <help>
