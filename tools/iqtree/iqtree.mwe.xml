@@ -1,0 +1,50 @@
+<tool id="iqtree_1" name="IQtree" version="0.3" >
+  <description>Efficient phylogenomic software by maximum likelihood</description>
+
+  <requirements>
+    <requirement type="package" version="1.5.5">iqtree</requirement>
+  </requirements> 
+
+
+  <command detect_errors="aggressive"><![CDATA[
+  iqtree-omp -s $s -pre PREF -nt AUTO
+  ]]>
+  </command>
+  
+  <inputs>
+    <param argument="-s"
+	   format="txt"
+	   label="Specify input alignment file in PHYLIP, FASTA, NEXUS, CLUSTAL or MSF format." type="data"/>
+  </inputs>
+
+  <outputs>
+    <data name='iqtree' format='txt' />
+  </outputs>
+
+  <tests>
+    <test>
+      
+      <param name='s' value='example.phy' />
+      
+      <output name='iqtree' ftype="txt" ><!-- Do not give file, results seeded differently -->
+      	<assert_contents>
+      	  <has_text text="17 sequences with 1998" />
+      	</assert_contents>
+      </output>
+      
+    </test>
+  </tests>
+
+  <help>
+More information can be found here: http://www.iqtree.org/doc/
+  </help>
+
+  <citations>
+    <citation type="doi">10.1093/molbev/msu300</citation>
+    <citation type="doi">10.1093/molbev/mst024</citation>
+  </citations>
+
+  
+</tool>
+
+    
