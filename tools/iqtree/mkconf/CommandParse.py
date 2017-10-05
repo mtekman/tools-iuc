@@ -3,6 +3,7 @@
 from Names import Names
 import sys
 
+import defaults
 
 class CommandParse:
 
@@ -16,7 +17,8 @@ class CommandParse:
             print("   <xml name='command' >",                  file=fout)
             print("     <command detect_errors='exit_code' >", file=fout, end="")
             print("<![CDATA[\n%s\n" % tool,                    file=fout)
-            
+
+            self.printDefaults(fout)
             self.printCheetah(fout)
             
             print("\n]]>\n",         file=fout)
@@ -26,8 +28,29 @@ class CommandParse:
 
 
 
-    def printCheetah(self, fout):
+    def printDefaults(self, fout):
+        
+        for arg in defaults.exclude_map:
+            val = defaults.exclude_map[arg]
 
+            if val == True:
+                print(arg, file=fout)
+                continue
+
+            if val == False:
+                continue
+
+            # use the default provided
+            print("%s %s" % (arg, val), file=fout)
+
+        print("", file=fout)
+            
+            
+                
+        
+
+    def printCheetah(self, fout):
+    
         def recurse(node, parent_list):
             if node.tagName == "param":
                 arg = node.getAttribute("argument")
@@ -55,6 +78,11 @@ class CommandParse:
                 if ftype == "boolean":
                     # just print the var name, trueval and falseval fill the gap
                     print("$%s\n\n" % fullname, file=fout)
+
+                elif ftype == "data":
+                    print('''#if str( $%s ) != "None":\n%s $%s\n#end if''' % (
+                        fullname, arg, fullname
+                    ), file=fout)                    
                 else:
                     print('''#if str( $%s ) != "":\n%s $%s\n#end if''' % (
                         fullname, arg, fullname
@@ -105,38 +133,3 @@ class CommandParse:
             print("Unable to parse:", node, file=sys.stderr)
 
         recurse(self.inputs, [])
-            
-
-        
-
-    def parseArgs(self):
-        text = ""
-        
-        for flag in self.fmap:
-
-            ftype, fdefault, fdescr, fname = self.fmap[flag]
-            # fname is sanitized in Document2Section.renameCheetahVars
-           
-            if flag in self.exclude:
-                val = self.exclude[flag]
-                if val != False:
-                    text += ("%s %s\n\n" % (flag,val))
-
-                continue
-            
-
-            # text, integer, float, file, boolean
-            #
-            if ftype == "boolean":
-                # just print the var name, trueval and falseval fill the gap
-                text += ("'$%s'\n\n" % fname)
-
-            else:
-                text += ('''#if '$%s'
-%s '$%s'
-#end if
-
-'''             % (fname, flag, fname))
-
-
-        return text
