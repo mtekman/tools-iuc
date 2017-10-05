@@ -13,7 +13,7 @@
 				</param>
 				<param argument="-t" format="plain" label="Specify a file containing starting tree for tree search" optional="true" type="data"/>
 				<param argument="-te" falsevalue="" help="That means, no tree search is performed and IQ-TREE computes the log-likelihood of the fixed user tree." label="Like -t but fixing user tree" optional="true" truevalue="-te" type="boolean" value="false"/>
-				<param argument="-seed" label="Specify a random number seed to reproduce a previous run" optional="true" type="integer" value="1547"/>
+				<param argument="-seed" label="Specify a random number seed to reproduce a previous run" optional="true" type="integer"/>
 				<param argument="-keep_ident" falsevalue="" help="By default: IQ-TREE will remove them during the analysis and add them in the end." label="Keep identical sequences in the alignment" optional="true" truevalue="-keep-ident" type="boolean" value="false"/>
 				<param argument="-safe" falsevalue="" help="This mode is automatically turned on when having more than 2000 sequences." label="Turn on safe numerical mode to avoid numerical underflow for large data sets with many sequences (typically in the order of thousands)" optional="true" truevalue="-safe" type="boolean" value="false"/>
 			</section>
