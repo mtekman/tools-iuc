@@ -177,7 +177,7 @@ e.g.<br/>
             </conditional>
         </section>
 
-        <section name="Analysis Positions" >
+        <section name="anal_pos" title="Analysis Positions" >
             <!-- test against -1 for validity -->
             <param name="steps" type="integer" value="-1" label="Step amount" help="Carry out analyses at n equally spaced locations to analyse between consecutive markers" />
             <param name="minstep" type="float"  value="-1" label="Minimum cM distance between steps" />
@@ -234,14 +234,54 @@ e.g.<br/>
             <param name="rsq" type="float" value="-1" label="r-squared threshold" help="Automatically define clusters including pairs of SNPs for which pairwise r2 exceeds threshold and all intervening markers." />
         </section>
 
-        <section name=""
-        
+        <section name="simulate" title="Simulation Options" >
+            <conditional name="sim_cond" >
+                <param name="use_simulate" type="select" label="Perform gene-dropping simulation" help="Generate random genotypes for each marker, conditional on current missing data pattern, genetic map and allele frequencies.">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </param>
+
+                <when value="no" />
+                <when value="yes" >
+                    <param name="rerun" type="integer" value="1" min="1" label="Repeat simulation N times" />
+                    <param name="trait_run" type="text" value="" label="Discrete trait model" >
+                        <help><![CDATA[
+Format follows either:<br/>
+<i>AFFECTION,FREQ(-),PEN(+/+),PEN(+/-),PEN(-/-),POSITION</i><br/>
+or<br/>
+<i>QTLNAME,SNP,Var(QTL),Var(Polygenes),Var(Environment)</i><br/>
+
+For a discrete trait, genotypes are simulated conditional on observed phenotypic data: if a particular family includes two affected individuals, Merlin will sample genotypes conditional on that outcome and the genetic model you specify. Merlin will simulate genotypes conditional on the phenotypes in a discrete trait labeled AFFECTION. It will assume that the disease risk allele has frequency FREQ(-) and that the propability of developing disease, conditional on the (unobserved) disease locus genotypes is PEN(+/+),PEN(+/-) and PEN(-/-). The disease locus will be placed at position POSITION.
+
+For a quantitative trait, simulated phenotypes will replace observed phenotypes (but the original missing data pattern will be respected so that if, for example, all parental trait values are missing in the original data, they will also be missing in the simulated data). With the second format above, simulated traits values will be stored in a column labeled QTLNAME. The QTL be influenced by SNP which will explain Var(QTL) of the total variance. The remaining variance will be polygenic, Var(Polygenes) or environmental, Var(Environment).
+
+The QTL phenotypes will replace the original trait values for QTLNAME, but will respect the original missing data pattern. The QTL genotypes will also replace the original genotypes for SNP, but will respect the original missing data pattern. An examplar set of options might be: --simulate --trait BMI,rs9930506,0.01,0.39,0.60. This would simulate trait BMI such that marker rs9930506 accounts for ).01 of the variance, with residual polygenic variance of 0.39 and residual environmental variance of .60.
+]]>
+                        </help>
+                        <sanitizer>
+                            <valid initial="string.printable" />
+                        </sanitizer>
+                    </param>
+                </when>
+            </conditional>
+        </section>
     </inputs>
     <outputs>
-
+        <data name="out_ihaplo" format="allegro_haplo" label="${tool.name} on ${on_string}: Haplotypes" />
+        <data name="out_fparam" format="allegro_linkage" label="${tool.name} on ${on_string}: Linkage" />
+        <data name="out_founder" format="allegro_descent" label="${tool.name} on ${on_string}: Descent" />
+        <data name="out_pairwise" format="txt" label="${tool.name} on ${on_string}: Pairwise IBD Matrix" />
+        <data name="out_select" format="txt" label="${tool.name} on ${on_string}: Most informative Affecteds" />
+        <data name="out_extended" format="txt" label="${tool.name} on ${on_string}: Extended IBD states" />
+        <data name="out_zscores" format="txt" label="${tool.name} on ${on_string}: ZScores" />
     </outputs>
+
+    <tests>
+        <test></test>
+    </tests>
+
     <help><![CDATA[
-        TODO: Fill in help.
+        Fill in help.
         ]]>
     </help>
     <citations>
