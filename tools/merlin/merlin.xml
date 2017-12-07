@@ -2,6 +2,11 @@
     <description>Linkage and Haplotype analysis</description>
     <macros>
         <token name="@VERSION@">1.1.2</token>
+        <xml name="macro_inputs" >
+            <param name="inp_ped" value="pedin.21" />
+            <param name="inp_dat" value="datain.21" />
+            <param name="inp_map" value="map.21" />
+        </xml>
     </macros>
     <requirements>
         <requirement type="package" version="@VERSION@" >merlin</requirement>
@@ -105,7 +110,7 @@ e.g.<br/>
         </section>
 
         <section name="vcla" title="Variance Components Linkage Analysis" >
-            <conditional name="vcl_cond" >
+            <conditional name="vcla_cond" >
                 <param name="vcla_out" type="select" label="Analysis type" multiple="true" >
                     <help><![CDATA[
                 <table>
@@ -126,7 +131,7 @@ e.g.<br/>
                 <when value="useCovariates" />
                 <when value="ascertainment" />
                 <when value="unlinked" >
-                    <param name="unlinked_alpha" type="float" min="0" max="1" />
+                    <param name="unlinked_alpha" type="float" value="-1" />
                 </when>
             </conditional>
         </section>
@@ -165,7 +170,7 @@ e.g.<br/>
                 </when>
 
                 <when value="filter" >
-                    <param name="filter_thresh" type="float" label="P-value threshold upper-limit" />
+                    <param name="filter_thresh" type="float" value="-1" label="P-value threshold upper-limit" />
                 </when>
 
                 <when value="custom" >
@@ -277,7 +282,10 @@ The QTL phenotypes will replace the original trait values for QTLNAME, but will 
     </outputs>
 
     <tests>
-        <test></test>
+        <test>
+            <expand macro="macro_inputs" />
+            <output name="out_fparam" />
+        </test>
     </tests>
 
     <help><![CDATA[
