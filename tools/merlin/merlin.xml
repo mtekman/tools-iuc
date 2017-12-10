@@ -2,7 +2,7 @@
     <description>Linkage and Haplotype analysis</description>
     <macros>
         <token name="@VERSION@">1.1.2</token>
-        <xml name="macro_inputs" >
+        <xml name="test_inputs" >
             <param name="inp_ped" value="pedin.21" />
             <param name="inp_dat" value="datain.21" />
             <param name="inp_map" value="map.21" />
@@ -275,6 +275,7 @@ The QTL phenotypes will replace the original trait values for QTLNAME, but will 
         <data name="out_ihaplo" format="allegro_haplo" label="${tool.name} on ${on_string}: Haplotypes" />
         <data name="out_fparam" format="allegro_linkage" label="${tool.name} on ${on_string}: Linkage" />
         <data name="out_founder" format="allegro_descent" label="${tool.name} on ${on_string}: Descent" />
+        <data name="out_errors" format="txt" label="${tool.name} on ${on_string}: Errors" />
         <data name="out_pairwise" format="txt" label="${tool.name} on ${on_string}: Pairwise IBD Matrix" />
         <data name="out_select" format="txt" label="${tool.name} on ${on_string}: Most informative Affecteds" />
         <data name="out_extended" format="txt" label="${tool.name} on ${on_string}: Extended IBD states" />
@@ -282,9 +283,44 @@ The QTL phenotypes will replace the original trait values for QTLNAME, but will 
     </outputs>
 
     <tests>
-        <test>
-            <expand macro="macro_inputs" />
-            <output name="out_fparam" />
+        <test><!-- Haplotypes -->
+            <param name="inp_ped" value="haplo.ped" />
+            <param name="inp_dat" value="haplo.dat" />
+            <param name="inp_map" value="haplo.map" />
+            <param name="haplo_type" value="best" />
+            <output name="out_ihaplo" />
+            <output name="out_founder" />
+        </test>
+        <test><!-- Parametric Linkage w. associated pairs -->
+            <param name="inp_ped" value="asp.ped" />
+            <param name="inp_dat" value="asp.dat" />
+            <param name="inp_map" value="asp.map" />
+
+            <param name="npl_out" value="npl,pairs" /><!-- multiple -->
+            <param name="vcla_out" value="vc,ascertainment" /><!-- multiple -->
+            <param name="steps" value="4" />
+
+            <output name="out_ihaplo" />
+        </test>
+        <test><!-- Simulation / Error -->
+            <param name="inp_ped" value="error.ped" />
+            <param name="inp_dat" value="error.dat" />
+            <param name="inp_map" value="error.map" />
+
+            <param name="anal_type" value="error" />
+            <param name="sim_cond" value="yes" />
+
+            <output name="out_errors" />
+            <output name="out_ihaplo" />
+        </test>
+        <test><!-- IBD / Kin -->
+            <param name="inp_ped" value="sibs.ped" />
+            <param name="inp_dat" value="sibs.dat" />
+            <param name="inp_map" value="sibs.map" />
+
+            <param name="recomb_type" value="singlepoint" />
+            <output name="out_errors" />
+            <output name="out_ihaplo" />
         </test>
     </tests>
 
