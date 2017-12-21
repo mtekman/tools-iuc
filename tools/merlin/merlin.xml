@@ -1,0 +1,337 @@
+<tool id="merlin" name="Merlin" version="@VERSION@.0">
+    <description>Linkage and Haplotype analysis</description>
+    <macros>
+        <token name="@VERSION@">1.1.2</token>
+        <xml name="test_inputs" >
+            <param name="inp_ped" value="pedin.21" />
+            <param name="inp_dat" value="datain.21" />
+            <param name="inp_map" value="map.21" />
+        </xml>
+    </macros>
+    <requirements>
+        <requirement type="package" version="@VERSION@" >merlin</requirement>
+        <requirement type="package" version="2017.1" >linkage2allegro</requirement>
+    </requirements>
+    <version_command><![CDATA[
+    merlin | head -1 | cut -d' ' -f 2
+    ]]>
+    </version_command>
+    <command detect_errors="exit_code"><![CDATA[
+        TODO: Fill in command template.
+        ]]>
+    </command>
+
+    <inputs>
+        <param name="inp_ped" type="data" format="linkage_pedin" label="Pedigree" />
+        <param name="inp_dat" type="data" format="linkage_recomb" label="Recombination Freqs." />
+        <param name="inp_map" type="data" format="linkage_map" label="Marker Positions" optional="true" />
+
+        <section name="general" title="General Options" expanded="true" >
+            <conditional name="mpl" >
+                <param name="use_lod" type="select" label="Calculate parametric LOD scores using custom model" >
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </param>
+
+                <when value="no" />
+                <when value="yes" >
+                    <param name="custom_model" type="data" format="tabular" label="Model file">
+                        <help><![CDATA[
+
+This text file must have one row for each of the disease models to be evaluated, and can include as many different models. In general, the file should be tab or space delimited, with 4 fields: affection status label (matching the data file), disease allele frequency, probability of being affected for individuals with 0, 1 and 2 copies of the disease allele (penetrances), and finally a label for the analysis model.
+
+e.g.<br/>
+<table>
+<tr><th>Affectation</th><th>Disease Allele Frequency</th><th>Penetrances</th><th>Model Name</th></tr>
+<tr><td>VERY_RARE_DISEASE</td><td>0.0001</td><td>0.0001,1.0,1.0</td><td>Rare_Dominant</td></tr>
+</table>
+]]>                       </help>
+                    </param>
+                </when>
+            </conditional>
+
+            <conditional name="allfreq" >
+                <param name="allfreq_src" type="select" label="Source of Allele Frequencies" >
+                    <option value="maxlikelihood">Max Likelihood</option>
+                    <option value="countfounders">Counting in founders</option>
+                    <option value="countall">Counting in all individuals</option>
+                    <option value="alleq">Assume all equal</option>
+                    <option value="file">Custom file</option>
+                </param>
+
+                <when value="maxlikelihood" />
+                <when value="countfounders" />
+                <when value="countall" />
+                <when value="alleq" />
+                <when value="file" >
+                    <param name="allfreq_file" type="data" format="txt" label="Allele frequencies in QTDT format" />
+                </when>
+            </conditional>
+
+            <param name="seed" type="integer" value="-1" label="Random seed" />
+
+
+            <param name="anal_type" type="select" label="Analysis type" multiple='true' >
+                <option value="error" >Create unlikely genotypes list</option>
+                <option value="information">Calculate entropy at each marker</option>
+                <option value="likelihood">Calculate likelihood of observed genotypes</option>
+            </param>
+        </section>
+
+        <section name="ibd" title="IBD State Calculations" >
+            <param name="ibd_out" type="select" label="Analysis type" multiple='true' >
+                <option value="ibd">Output IBD coefficients</option>
+                <option value="kinship">Output pairwise kinship coefficients</option>
+                <option value="matrices">Calculate possible pairwise IBD matrices and probabilities for each family</option>
+                <option value="extended">Output extended IBD state information to track maternal and paternal alleles seperately</option>
+                <option value="select">Select the most informative affected individuals for allele sharing</option>
+            </param>
+        </section>
+
+        <section name="npl_anal" title="Non-parametric Linkage Analysis" >
+            <param name="npl_out" type="select" label="Analysis type" multiple='true' >
+                <help><![CDATA[
+<table>
+    <tr><td>NPL</td><td>Use the Whittemore and Halpern NPL all statistic to test for allele sharing among affected individuals. Also calculates a LOD score using the Kong and Cox linear model.</td><td></tr>
+    <tr><td>PAIRS</td><td>Use the Whittemore and Halpern NPL pairs statistic to test for allele sharing among affected individuals. Also calculates a LOD score using the Kong and Cox linear model. Versions 0.10.1 and higher also consider sharing within inbred individuals when computing this statistic</td><td></tr>
+    <tr><td>QTL</td><td>Use a non-parametric statistic to test for sharing among individuals with similar phenotypes. Use the sample mean to estimate the population mean, and calculate a LOD score using the Kong and Cox linear model</td><td></tr>
+    <tr><td>Deviates</td><td>Similar to qtl, but assumes that phenotypes are deviates from the population mean</td><td></tr>
+    <tr><td>Exp</td><td>Calculate non-parametric LOD scores using the Kong and Cox exponential model. Although more time consuming, this option can be powerful in datasets that show very strong linkage signals or which include larger pedigrees.</td><td></tr>
+   <tr><td>ZScores</td><td>Generate a compact file summarizing family-specific NPL scores at each location. The file can be used for additional follow-up analyses.</td><td></tr>
+</table>
+                ]]>
+                </help>
+                <option value="npl">NPL</option>
+                <option value="pairs">PAIRS</option>
+                <option value="qtl">QTL</option>
+                <option value="deviates">Deviates</option>
+                <option value="zscores">ZScores</option>
+            </param>
+        </section>
+
+        <section name="vcla" title="Variance Components Linkage Analysis" >
+            <conditional name="vcla_cond" >
+                <param name="vcla_out" type="select" label="Analysis type" multiple="true" >
+                    <help><![CDATA[
+                <table>
+<tr><td>VC</td><td>Perform variance components linkage analysis assuming no dominance. Also calculates sample heritability for each trait.</td><td></tr>
+<tr><td>Use Covariates</td><td>Model covariate effects during analysis. In QTDT format data files, covariates are indicated by "C" data type.</td></tr>
+<tr><td>Ascertainment</td><td>Model single proband ascertainment. In ascertained families, the proband can be tagged by setting his individual id to "proband" or by including a dummy affection status variable named "proband" and setting its value to 2 (or affected) for probands and missing otherwise.</td></tr>
+<tr><td>Unlinked alpha</td><td>Use a simple heterogeneity model for linkage. The model assumes that a fraction alpha of the families are unlinked.</td></tr>
+</table>
+    ]]>
+                    </help>
+                    <option value="vc">vc</option>
+                    <option value="useCovariates">Use Covariates</option>
+                    <option value="ascertainment">Ascertainment</option>
+                    <option value="unlinked">Unlinked</option>
+                </param>
+
+                <when value="vc" />
+                <when value="useCovariates" />
+                <when value="ascertainment" />
+                <when value="unlinked" >
+                    <param name="unlinked_alpha" type="float" value="-1" />
+                </when>
+            </conditional>
+        </section>
+
+        <section name="assoc_anal" title="Association Analyses" >
+            <conditional name="assoc_cond" >
+                <param name="assoc_out" type="select" label="Anal type" multiple="true" >
+                    <help><![CDATA[
+                <table>
+<tr><td>infer</td><td>Estimate missing genotypes in a pedigree. When this option is selected, MERLIN will estimate the posterior distribution of each missing SNP genotype conditional on available genotype data. A new pedigree file will be generated including the most likely genotype for each individual [whenever this most likely genotype has a posterior probability of > 95%], the probability that each missing genotype is a homozygote for the reference allele, the probability that each missing genotype is an heterozygote, and the expected number of copies of a reference allele in each missing genotype.</td></tr>
+
+<tr><td>assoc</td><td>This option uses a variance component model to estimate an additive effect for each SNP and carry out an association test. Before evaluating evidence for association, missing genotypes are estimated to increase power.</td></tr>
+
+<tr><td>fastAssoc</td><td>This option uses a rapid score test to estimate an additive effect for each SNP. It is slightly less accurate, but much more computationally efficient, than the --assoc option and recommended for first pass analysis of genome-wide scans and other large datasets.</td></tr>
+
+<tr><td>filter</td><td>When the fastassoc option is used, only output p-values below a certain threshold.</td></tr>
+
+<tr><td>custom</td><td>Specify a custom covariate model.</td></tr>
+                </table>
+                ]]>
+                    </help>
+                    <option value="infer">Infer</option>
+                    <option value="assoc">Assoc</option>
+                    <option value="fastAssoc">FastAssoc</option>
+                    <option value="filter">Filter threshold</option>
+                    <option value="custom">Custom</option>
+                </param>
+
+                <when value="infer" >
+                    <param name="infer_type" type="select" label="Infer type" help="Genotypes will only be inferred for markers with exactly two alleles. Multi-allelic and monomorphic markers will not be included in the output file. If you want a smaller output pedigree file, consider the inferBest, inferExpected and inferProbabilities options as alternatives." >
+                        <option value="" >Default</option>
+                        <option value="inferBest">Infer Best</option>
+                        <option value="inferExpected">Infer Expected</option>
+                        <option value="inferProbabilities">Infer Probabilities</option>
+                    </param>
+                </when>
+
+                <when value="filter" >
+                    <param name="filter_thresh" type="float" value="-1" label="P-value threshold upper-limit" />
+                </when>
+
+                <when value="custom" >
+                    <param name="custom_file" type="data" format="txt" label="Covariates" help="The custom file allows users to customize the covariate model for each trait. For each trait to be analyzed, this file should contain two lines. The first line should include the TRAIT keyword followed by the trait name. The second line should include the COVARIATE keyword followed by a list of appropriate covariates." />
+                </when>
+
+                <when value="assoc" />
+                <when value="fastAssoc" />
+            </conditional>
+        </section>
+
+        <section name="anal_pos" title="Analysis Positions" >
+            <!-- test against -1 for validity -->
+            <param name="steps" type="integer" value="-1" label="Step amount" help="Carry out analyses at n equally spaced locations to analyse between consecutive markers" />
+            <param name="minstep" type="float"  value="-1" label="Minimum cM distance between steps" />
+            <param name="maxstep" type="float"  value="-1" label="Maximum cM distance between steps" />
+            <param name="grid" type="float" value="-1" label="Grid amount" help="Carry out analyses at n-cM equally spaced intervals" />
+            <param name="cm_start" type="float" value="-1" label="Start pos (cM)" />
+            <param name="cm_stop" type="float" value="-1" label="Stop pos (cM)" />
+            <param name="cm_space" type="text" value="" label="Analyses only these positions (markername, or cM)">
+                <sanitizer>
+                    <valid initial="string.printable" />
+                </sanitizer>
+            </param>
+        </section>
+
+        <section name="haplo" title="Haplotyping Analyses" expanded="true" >
+            <param name="haplo_type" type="select" label="Analysis type" >
+                <help><![CDATA[
+                <table>
+<tr><td>best</td><td>Output the most likely haplotype vector</td></tr>
+<tr><td>sample</td><td>Samples a likely haplotype vector according to likelihood. Use the random seed parameter, to sample a different vector.</td></tr>
+<tr><td>all</td><td>List all possible haplotype vectors for each family. Assumes zero recombination.</td></tr>
+</table>
+]]></help>
+                <option value="best" selected="true">Best</option>
+                <option value="sample">Sample</option>
+                <option value="all">All</option>
+            </param>
+        </section>
+
+        <section name="recomb" title="Recombination Options" >
+            <param name="recomb_type" type="select" label="Number of recombinations" >
+                <help><![CDATA[
+                <table>
+<tr><td>zero</td><td>Assume no recombination between markers. Families with obligate recombinants will be discarded.</td></tr>
+<tr><td>one, two, three</td><td>Allow 1, 2 or 3 recombination events between consecutive informative markers. This can improve performance of Lander-Green algorithm convolutions and still provide accurate solutions when markers are closely spaced.
+</td></tr>
+<tr><td>singlepoint</td><td>Consider each marker individually.</td></tr>
+                </table>
+                ]]></help>
+
+                <option value="">Default</option>
+                <option value="zero">Zero</option>
+                <option value="one">One</option>
+                <option value="two">Two</option>
+                <option value="three">Three</option>
+                <option value="singlepoint">Singlepoint</option>
+            </param>
+        </section>
+
+        <section name="markov" title="Marker Clustering Options for Modelling Linkage Disequilibrium" >
+            <param name="cluster" type="data" format="txt" label="Custom clustering file" help="Model linkage disequilibrium for clusters of neighboring markers defined in the clustering file. The file should indicate groups of markers that are in linkage disequilibrium and, optionally, frequencies of the haplotypes they define. If haplotype frequencies are not provided, they will be estimated automatically." optional="true" />
+            <param name="cfreq" type="boolean" value="false" falsevalue="" truevalue="--cfreq" label="Summarize clusters in LD?" help="This option instructs merlin to generate a file summarizing clusters of markers in linkage disequilibrium and the haplotype frequency distribution within each cluster. This file can be used as an input for the custom clustering file (above)." />
+            <param name="distance" type="float" value="-1" label="Distance threshold" help="Automatically define clusters and estimate haplotype frequencies for groups of markers that are less than threshold cM apart." />
+            <param name="rsq" type="float" value="-1" label="r-squared threshold" help="Automatically define clusters including pairs of SNPs for which pairwise r2 exceeds threshold and all intervening markers." />
+        </section>
+
+        <section name="simulate" title="Simulation Options" >
+            <conditional name="sim_cond" >
+                <param name="use_simulate" type="select" label="Perform gene-dropping simulation" help="Generate random genotypes for each marker, conditional on current missing data pattern, genetic map and allele frequencies.">
+                    <option value="yes">Yes</option>
+                    <option value="no">No</option>
+                </param>
+
+                <when value="no" />
+                <when value="yes" >
+                    <param name="rerun" type="integer" value="1" min="1" label="Repeat simulation N times" />
+                    <param name="trait_run" type="text" value="" label="Discrete trait model" >
+                        <help><![CDATA[
+Format follows either:<br/>
+<i>AFFECTION,FREQ(-),PEN(+/+),PEN(+/-),PEN(-/-),POSITION</i><br/>
+or<br/>
+<i>QTLNAME,SNP,Var(QTL),Var(Polygenes),Var(Environment)</i><br/>
+
+For a discrete trait, genotypes are simulated conditional on observed phenotypic data: if a particular family includes two affected individuals, Merlin will sample genotypes conditional on that outcome and the genetic model you specify. Merlin will simulate genotypes conditional on the phenotypes in a discrete trait labeled AFFECTION. It will assume that the disease risk allele has frequency FREQ(-) and that the propability of developing disease, conditional on the (unobserved) disease locus genotypes is PEN(+/+),PEN(+/-) and PEN(-/-). The disease locus will be placed at position POSITION.
+
+For a quantitative trait, simulated phenotypes will replace observed phenotypes (but the original missing data pattern will be respected so that if, for example, all parental trait values are missing in the original data, they will also be missing in the simulated data). With the second format above, simulated traits values will be stored in a column labeled QTLNAME. The QTL be influenced by SNP which will explain Var(QTL) of the total variance. The remaining variance will be polygenic, Var(Polygenes) or environmental, Var(Environment).
+
+The QTL phenotypes will replace the original trait values for QTLNAME, but will respect the original missing data pattern. The QTL genotypes will also replace the original genotypes for SNP, but will respect the original missing data pattern. An examplar set of options might be: --simulate --trait BMI,rs9930506,0.01,0.39,0.60. This would simulate trait BMI such that marker rs9930506 accounts for ).01 of the variance, with residual polygenic variance of 0.39 and residual environmental variance of .60.
+]]>
+                        </help>
+                        <sanitizer>
+                            <valid initial="string.printable" />
+                        </sanitizer>
+                    </param>
+                </when>
+            </conditional>
+        </section>
+    </inputs>
+    <outputs>
+        <data name="out_ihaplo" format="allegro_haplo" label="${tool.name} on ${on_string}: Haplotypes" />
+        <data name="out_fparam" format="allegro_linkage" label="${tool.name} on ${on_string}: Linkage" />
+        <data name="out_founder" format="allegro_descent" label="${tool.name} on ${on_string}: Descent" />
+        <data name="out_errors" format="txt" label="${tool.name} on ${on_string}: Errors" />
+        <data name="out_pairwise" format="txt" label="${tool.name} on ${on_string}: Pairwise IBD Matrix" />
+        <data name="out_select" format="txt" label="${tool.name} on ${on_string}: Most informative Affecteds" />
+        <data name="out_extended" format="txt" label="${tool.name} on ${on_string}: Extended IBD states" />
+        <data name="out_zscores" format="txt" label="${tool.name} on ${on_string}: ZScores" />
+    </outputs>
+
+    <tests>
+        <test><!-- Haplotypes -->
+            <param name="inp_ped" value="haplo.ped" />
+            <param name="inp_dat" value="haplo.dat" />
+            <param name="inp_map" value="haplo.map" />
+            <param name="haplo_type" value="best" />
+            <output name="out_ihaplo" />
+            <output name="out_founder" />
+        </test>
+        <test><!-- Parametric Linkage w. associated pairs -->
+            <param name="inp_ped" value="asp.ped" />
+            <param name="inp_dat" value="asp.dat" />
+            <param name="inp_map" value="asp.map" />
+
+            <param name="npl_out" value="npl,pairs" /><!-- multiple -->
+            <param name="vcla_out" value="vc,ascertainment" /><!-- multiple -->
+            <param name="steps" value="4" />
+
+            <output name="out_ihaplo" />
+        </test>
+        <test><!-- Simulation / Error -->
+            <param name="inp_ped" value="error.ped" />
+            <param name="inp_dat" value="error.dat" />
+            <param name="inp_map" value="error.map" />
+
+            <param name="anal_type" value="error" />
+            <param name="sim_cond" value="yes" />
+
+            <output name="out_errors" />
+            <output name="out_ihaplo" />
+        </test>
+        <test><!-- IBD / Kin -->
+            <param name="inp_ped" value="sibs.ped" />
+            <param name="inp_dat" value="sibs.dat" />
+            <param name="inp_map" value="sibs.map" />
+
+            <param name="recomb_type" value="singlepoint" />
+            <output name="out_errors" />
+            <output name="out_ihaplo" />
+        </test>
+    </tests>
+
+    <help><![CDATA[
+        Fill in help.
+        ]]>
+    </help>
+    <citations>
+        <citation type="doi">10.1038/ng786</citation>
+        <citation type="doi">10.1086/381652</citation>
+        <citation type="doi">10.1086/497345</citation>
+        <citation type="doi">10.1086/521580</citation>
+    </citations>
+</tool>
