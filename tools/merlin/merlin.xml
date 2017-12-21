@@ -17,8 +17,162 @@
     ]]>
     </version_command>
     <command detect_errors="exit_code"><![CDATA[
-        TODO: Fill in command template.
-        ]]>
+
+-pname $inp_ped
+-dname $inp_dat
+#if $inp_map
+--mname $inp_map
+#end if
+
+## -- Below -- multiple option flags for select $general.mpl.use_lod.value
+#if $general.mpl.use_lod.value = 'yes':
+--model $general.mpl.custom_model
+#end if
+
+## -- Below -- multiple option flags for select $general.allfreq.allfreq_src.value
+#if $general.allfreq.allfreq_src.value = 'maxlikelihood':
+-fm
+#elif $general.allfreq.allfreq_src.value = 'countfounders':
+-ff
+#elif $general.allfreq.allfreq_src.value = 'countall':
+-fa
+#elif $general.allfreq.allfreq_src.value = 'alleq':
+-fe
+#elif $general.allfreq.allfreq_src.value = 'file':
+-f '$general.allfreq.$allfreq_file'
+#end if
+
+-r $general.seed
+## -- Below -- multiple option flags for select $general.anal_type.value
+#if $general.anal_type.value = 'error':
+--error
+#elif $general.anal_type.value = 'information':
+--information
+#elif $general.anal_type.value = 'likelihood':
+--likelihood
+#end if
+
+## -- Below -- multiple option flags for select $ibd.ibd_out.value
+#if $ibd.ibd_out.value = 'ibd':
+--ibd
+#elif $ibd.ibd_out.value = 'kinship':
+--kinship
+#elif $ibd.ibd_out.value = 'matrices':
+--matrices
+#elif $ibd.ibd_out.value = 'extended':
+--extended
+#elif $ibd.ibd_out.value = 'select':
+--select
+#end if
+
+## -- Below -- multiple option flags for select $npl_anal.npl_out.value
+#if $npl_anal.npl_out.value = 'npl':
+--npl
+#elif $npl_anal.npl_out.value = 'pairs':
+--pairs
+#elif $npl_anal.npl_out.value = 'qtl':
+--qtl
+#elif $npl_anal.npl_out.value = 'deviates':
+--deviates
+#elif $npl_anal.npl_out.value = 'zscores':
+--zscores
+#end if
+
+## -- Below -- multiple option flags for select $vcla.vcla_cond.vcla_out.value
+#if $vcla.vcla_cond.vcla_out.value = 'vc':
+--vc
+#elif $vcla.vcla_cond.vcla_out.value = 'useCovariates':
+--useCovariates
+#elif $vcla.vcla_cond.vcla_out.value = 'ascertainment':
+--ascertainment
+#elif $vcla.vcla_cond.vcla_out.value = 'unlinked':
+--unlinked $vcla.vcla_cond.unlinked_alpha
+#end if
+
+#if $assoc_anal.assoc_cond.assoc_out.value == 'infer'
+## -- Below -- multiple option flags for select $assoc_anal.assoc_cond.infer_type.value
+    #if $assoc_anal.assoc_cond.infer_type.value = '':
+--infer
+    #elif $assoc_anal.assoc_cond.infer_type.value = 'inferBest':
+--inferBest
+    #elif $assoc_anal.assoc_cond.infer_type.value = 'inferExpected':
+--inferExpected
+    #elif $assoc_anal.assoc_cond.infer_type.value = 'inferProbabilities':
+--inferProbabilites
+    #end if
+#elif $assoc_anal.assoc_cond.assoc_out.value = 'assoc':
+--assoc
+#elif $assoc_anal.assoc_cond.assoc_out.value = 'fastAssoc':
+--fastAssoc
+#elif $assoc_anal.assoc_cond.assoc_out.value == 'filter'
+--filter $assoc_anal.assoc_cond.filter_thresh
+#elif $assoc_anal.assoc_cond.assoc_out.value == 'custom'
+--custom $assoc_anal.assoc_cond.custom_file
+#end if
+
+## -- Below -- multiple option flags for select $assoc_anal.assoc_cond.assoc_out.value
+
+--steps:$anal_pos.steps
+--minStep:$anal_pos.minstep
+--maxStep:$anal_pos.maxstep
+--grid:$anal_pos.grid
+--start:$anal_pos.cm_start
+--stop:$anal_pos.cm_stop
+#if str($anal_pos.cm_space.value) != ''
+--positions:'$anal_pos.cm_space.value'
+#end if
+
+## -- Below -- multiple option flags for select $haplo.haplo_type.value
+#if $haplo.haplo_type.value = 'best':
+--best
+#elif $haplo.haplo_type.value = 'sample':
+--sample
+#elif $haplo.haplo_type.value = 'all':
+--all
+#end if
+
+## -- Below -- multiple option flags for select $recomb.recomb_type.value
+#if $recomb.recomb_type.value = '':
+--singlepoint
+#elif $recomb.recomb_type.value = 'zero':
+--zero
+#elif $recomb.recomb_type.value = 'one':
+--one
+#elif $recomb.recomb_type.value = 'two':
+--two
+#elif $recomb.recomb_type.value = 'three':
+--three
+#elif $recomb.recomb_type.value = 'singlepoint':
+--singlepoint
+#end if
+
+#if $markov.cluster
+--cluster $markov.cluster
+#end if
+
+$cfreq
+
+#if $markov.distance != -1
+--distance $markov.distance
+#end if
+
+#if $markov.rsq != -1
+--rsq $markov.rsq
+#end if
+
+#if $simulate.sim_cond.use_simulate.value == 'yes'
+--simulate
+    #if $simulate.sim_cond.rerun != -1
+--reruns $simulate.sim_cond.rerun
+    #end if
+    
+    #if str($simulate.sim_cond.trait_run.value) != ''
+--trait '$simulate.sim_cond.trait_run.value'
+    #end if
+#end if
+
+ 
+]]>
     </command>
 
     <inputs>
