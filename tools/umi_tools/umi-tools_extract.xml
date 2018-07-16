@@ -149,17 +149,11 @@
         </data>
         <data name="out1" format_source="input_read1" label="Reads1: ${tool.name} on ${on_string}" >
             <filter>input_type['type'] != "single"</filter>
-            <change_format>
-                <when input="paired_type" value="yes" format="fastq.gz" />
-                <when input="paired_type" value="no" format="fastq" />
-            </change_format>
+            <expand macro="out_conditional" />
         </data>
         <data name="out2" format_source="input_read2" label="Reads2: ${tool.name} on ${on_string}" >
             <filter>input_type['type'] != "single"</filter>
-            <change_format>
-                <when input="paired_type" value="yes" format="fastq.gz" />
-                <when input="paired_type" value="no" format="fastq" />
-            </change_format>
+            <expand macro="out_conditional" />
         </data>
         
         <data name="out_log" format="txt">
@@ -198,7 +192,6 @@
                     <has_text text="Reads output: 100" />
                 </assert_contents>
             </output>
-
         </test>
         <test>
             <param name="type" value="paired_collection" /> <!-- same as before, but uncompressed -->
