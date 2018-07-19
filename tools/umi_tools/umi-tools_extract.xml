@@ -1,7 +1,23 @@
-<tool id="umi_tools_extract" name="UMI-tools extract" version="@VERSION@.1">
+<tool id="umi_tools_extract" name="UMI-tools extract" version="@VERSION@.2">
     <description>Extract UMI from fastq files</description>
     <macros>
         <import>macros.xml</import>
+        <macro name="out_conditional">
+            <actions>
+                <conditional name="input_type.type">
+                    <when value="paired_collection" >
+                        <action type="format">
+                            <option type="from_param" name="input_type.input_readpair" param_attribute="forward.ext" />
+                        </action>
+                    </when>
+                    <when value="paired" >
+                        <action type="format">
+                            <option type="from_param" name="input_type.input_read1"  param_attribute="ext" />
+                        </action>
+                    </when>
+                </conditional>
+            </actions>
+        </macro>
     </macros>
     <expand macro="requirements" />
     <command detect_errors="exit_code"><![CDATA[
