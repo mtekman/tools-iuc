@@ -1,172 +1,187 @@
-<tool id="raceid_main" name="RaceID" version="@VERSION@.0">
+<tool id="raceid3" name="RaceID3" version="@VERSION@.0">
     <description>Race ID pipeline for single-cell RNA analysis</description>
     <macros>
         <import>macros.xml</import>
     </macros>
     <expand macro="requirements" />
 
-    <command detect_errors="exit_code"><![CDATA[    
-    ## Filter
-    echo "Filtering" &&
-    Rscript '@SCRIPT_DIR@/raceID_filter.R' '@SCRIPT_DIR@' '$rconf_source_filter' &&
-
-    ## Kmeans
-    echo "K-means" &&
-    Rscript '@SCRIPT_DIR@/raceID_kmeans_heatmap.R' '@SCRIPT_DIR@' '$rconf_source_kmeans' &&
-
-    mkdir '${out_html.files_path}' &&
-    mv plot_*.svg '${out_html.files_path}' &&
-
-    echo '
-    <html><head></head>
-    <body>
-    <h1>RaceID k-means</title></h1><br />
-    <h3>Gap statistic</h3>
-    <img src="plot_gap.svg" ><br />
-    <h3>Jaccard Similarity</h3>
-    <img src="plot_jaccard.svg" ><br />
-    <h3>Silhouette Plot</h3>
-    <img src="plot_silhouette.svg" ><br />
-    <h3>Cluster Heatmap</h3>
-    <img src="plot_clustheatmap.svg" ><br />
-    ' > '$out_html' &&
-
-    ## Outlier -- relies on kmeans
-    echo "Outlier" &&
-    Rscript '@SCRIPT_DIR@/raceID_outlierdetect.R' '@SCRIPT_DIR@' '$rconf_source_outlier' &&
-
-    mv plot_*.svg '${out_html.files_path}' &&
-    echo '
-    <br/>
-    <h1>RaceID Outlier Detection</h1><br />
-    <h3>Background</h3>
-    <img src="plot_background.svg" ><br />
-    <h3>Sensitivity</h3>
-    <img src="plot_sensitivity.svg" ><br />
-    <h3>Outlier Probability</h3>
-    <img src="plot_outlierprobs.svg" ><br />
-    <h3>Final Heatmap</h3>
-    <img src="plot_finalheat.svg" ><br />
-    ' >> '$out_html' &&
-
-    ## tSNE -- relies on kmeans and outlier
-    echo "tSNE" &&
-    Rscript '@SCRIPT_DIR@/raceID_tsne.R' '@SCRIPT_DIR@' '$rconf_source_tsne' &&
-
-    ##mkdir '${out_html.files_path}' &&
-    mv plot_*.svg '${out_html.files_path}' &&
-
-    echo '
-    <br/>
-    <h1>RaceID tSNE</h1><br />
-    <h3>Initial k-means clusters</h3>
-    <br /><img src="plot_initial.svg" >
-    <h3>Final clusters</h3>
-    <br /><img src="plot_final.svg" >
-    <h3>Labelled</h3>
-    <br /><img src="plot_labels.svg" >
-    <h3>Symbols</h3>
-    <br /><img src="plot_symbols.svg" >
-    ' >> '$out_html' &&
-
-    #if $section_tsne.genexp_select.use_gexpr == "Yes":
-        #for $gene_set in $section_tsne.genexp_select.geneset:
-            echo "<h3>Expression for: [${gene_set.genes.value}]</h3>" >> '$out_html' &&
-            echo "<br /><img src=\"plot_${gene_set.genes.value}\" >" >> '$out_html' &&
-        #end for
-    #end if
-    echo '</body></html>' >> '$out_html'
-
+    <command detect_errors="exit_code"><![CDATA[
+    Rscript '$__tool_directory/scripts/allforone.R' '$rconf_main'
     ]]></command>
 
     <configfiles>
-        <configfile name="rconf_source_filter">
-            count_matrix = '$section_filter.inp_count'
-            filtering = as.logical( '$section_filter.filtering.do_filter.value' )
-            output_table = '$out_table_filter'
-            output_rdat = '@out_rdat_filter@'
+        <configfile name="rconf_main">
+count_matrix = '$section_filter.inp_count'
 
-            # Defaults
-            control_genes_filter="";
-            c_mintotal = 3000; c_minexpr = 5; c_maxexpr = 500; c_minnumber = 1;
-            c_downsample = F; c_dsn = 1; c_rseed = 17000;
+                                  # Filter settings #
+## Defaults
+c.mintotal = 3000;
+c.minexpr = 5;
+c.maxexpr = Inf;
+c.minnumber = 1;
+c.downsample = F;
+c.dsn = 1;
+c.rseed = 17000;
+c.hkn = FALSE;
+c.sfn = FALSE;
+c.fgenes = c()
+c.cgenes = c()
+c.docc = TRUE             ## Do cell cycle correction
+c.docc.custom = FALSE     ## - use custom cell-cycle genes
+c.docc.custom.genes = c("Malat1", "Lars2", "Mki67", "Pcna-ps2", "Hsp90aa1", "Jun", "Fos")
 
-            #if $section_filter.filtering.do_filter.value == "T":
-            control_genes_filter = '$section_filter.filtering.remove_nonendog.value'
-                #if $section_filter.filtering.default_filtering_select.do_filter_defaults.value == "advanced_options":
-            c_mintotal = as.integer( '$section_filter.filtering.default_filtering_select.mintotal' )
-            c_minexpr = as.integer( '$section_filter.filtering.default_filtering_select.minexpr' )
-            c_maxexpr = as.integer( '$section_filter.filtering.default_filtering_select.maxexpr' )
-            c_minnumber = as.integer( '$section_filter.filtering.default_filtering_select.minnumber' )
-                    #if $section_filter.filtering.default_filtering_select.dsn:
-            c_downsample = T;
-            c_dsn = as.integer( '$section_filter.filtering.default_filtering_select.dsn' )
-                    #end if
-            c_rseed = as.integer( '$section_filter.filtering.default_filtering_select.filter_rseed' )
-                #end if
-            #end if
-        </configfile>
-        <configfile name="rconf_source_kmeans">
-            sc = readRDS( '@inp_rdat_kmeans@' )
-            output_rdat = '@out_rdat_kmeans@'
-            c_metric = 'pearson'; c_cln = 0; dogap = T; c_clustnr = 20; bgap = 50;
-            semethod = 'Tibs2001SEmax'; sefactor = .25; c_bootnr = 50; c_rseed = 17000;
 
-            c_metric = '$section_kmeans.metric'
-            c_cln = as.integer( '$section_kmeans.cln' )
-            dogap = as.logical( '$section_kmeans.gapstats.dogap.value' )
-                #if $section_kmeans.gapstats.dogap.value == "T":
-            c_clustnr = as.integer( '$section_kmeans.gapstats.clustnr' )
-            bgap = as.integer( '$section_kmeans.gapstats.bgap' )
-            semethod = '$section_kmeans.gapstats.semethod.value'
-            sefactor = as.numeric( '$section_kmeans.gapstats.sefactor' )
-                #end if
-            c_bootnr = as.integer( '$section_kmeans.bootnr' )
-            c_rseed = as.integer( '$section_kmeans.kmeans_rseed' )
+## To implement into script (remove all genes with these prefixes)
+c.filter.ercc = TRUE
+c.filter.mito = TRUE
 
-            generate_final_rdata = T
-        </configfile>
-        <configfile name="rconf_source_outlier">
-            sc = readRDS( '@inp_rdat_outlier@' )
-            output_rdat = '@out_rdat_outlier@'
-            output_table= '$out_table_outlier'
-            # set defaults
-            c_outminc = 5; c_outlg = 2; c_probthr = 1e-3; c_outdistquant = 0.75;
+## Annotation dataset
+ca.dataset = '$section_filter.annot_dataset'
 
-            c_outminc = as.integer( '$section_outlier.outminc' )
-            c_outlg = as.integer( '$section_outlier.outlg' )
-            c_probthr = as.numeric( '$section_outlier.probthr' )
-            c_outdistquant = as.numeric( '$section_outlier.probthr' )
+#if str($section_filter.filt.doit) == "T":
+c.filter.ercc = str($section_filter.filt.filter_ercc)
+c.filter.mito = str($section_filter.filt.filter_mito)
+c.fgenes = c( $section_filter.filt.f_genes )
+c.cgenes = c( $section_filter.filt.c_genes )
 
-            generate_final_rdata = T
-        </configfile>
-        <configfile name="rconf_source_tsne" >
-            sc = readRDS( '@inp_rdat_tsne@' )
-            output_rdat = '$out_rdat_tsne'  # final output RData
-            regex_val = ""
-            c_rseed = '$section_tsne.tsne_rseed'
-            gene_sets = ""
-            #if $section_tsne.genexp_select.use_gexpr == 'Yes':
-            gene_sets = '#for $gns in $section_tsne.genexp_select.geneset# $gns.genes.value _split_ #end for#'
-            regex_val = '$section_tsne.genexp_select.regex'
-            #end if
-            final_rdata = T
+   #if str($section_filter.filt.docc.doit) == "no"
+c.docc = FALSE
+c.docc.custom = FALSE
+   #elif str($section_filter.filt.docc.doit) == "custom"
+c.docc = TRUE
+c.docc.custom = TRUE
+c.docc.custom.genes = c($section_filter.filt.docc.genes)
+   #elif str($section_filter.filt.docc.doit) == "auto"
+c.docc = TRUE
+c.docc.custom = FALSE
+   #end if
+
+   #if str($section_filter.filt.extra.useit) == "advanced_options":
+c.hkn = as.logical( '$section_filter.filt.extra.hkn' )
+c.sfn = as.logical( '$section_filter.filt.extra.sfn' )
+c.mintotal = as.integer( '$section_filter.filt.extra.mintotal' )
+c.minexpr = as.integer( '$section_filter.filt.extra.minexpr' )
+c.maxexpr = as.integer( '$section_filter.filt.extra.maxexpr' )
+c.minnumber = as.integer( '$section_filter.filt.extra.minnumber' )
+        #if $section_filter.filt.extra.dsn:
+c.downsample = T;
+c.dsn = as.integer( '$section_filter.filt.extra.dsn' )
+        #end if
+c.rseed = as.integer( '$section_filter.filt.extra.filter_rseed' )
+    #end if
+#end if
+
+                                # Regression #
+c.dobatchregression = TRUE
+c.dobatchregression.regexcapture = "P\\d+_B([0-9]+)_.*"
+
+                                # Clustering settings #
+## Defaults
+ck.clustnr = 20;
+ck.bootnr = 50;
+ck.metric = 'pearson';
+ck.dogap = FALSE;
+ck.semethod = 'Tibs2001SEmax';
+ck.sefactor = .25;
+ck.bgap = 50;
+ck.cln = 0;
+ck.rseed = 17000;
+
+## To incorporate
+ck.funcluster = 'kmedoids'
+
+
+ck.metric = '$section_clustering.metric'
+ck.cln = as.integer( '$section_clustering.cln' )
+ck.dogap = as.logical( '$section_clustering.gapstats.dogap.value' )
+#if $section_clustering.gapstats.dogap.value == "T":
+ck.clustnr = as.integer( '$section_clustering.gapstats.clustnr' )
+ck.bgap = as.integer( '$section_clustering.gapstats.bgap' )
+ck.semethod = '$section_clustering.gapstats.semethod.value'
+ck.sefactor = as.numeric( '$section_clustering.gapstats.sefactor' )
+#end if
+ck.bootnr = as.integer( '$section_clustering.bootnr' )
+ck.rseed = as.integer( '$section_clustering.kmeans_rseed' )
+
+                                # Outlier settings #
+## Defaults
+co.outminc = 5;
+co.outlg = 2;
+co.probthr = 1e-3;
+co.outdistquant = 0.95;
+
+co.outminc = as.integer( '$section_outlier.outminc' )
+co.outlg = as.integer( '$section_outlier.outlg' )
+co.probthr = as.numeric( '$section_outlier.probthr' )
+co.outdistquant = as.numeric( '$section_outlier.probthr' )
+co.dorandforest = TRUE
+
+                               # Heatmap Settings #
+cm.hmethod = 'single'
+
+
+                                # tSNE settings #
+## Defaults
+## These here are settings for examining specific gene sets with the tSNE generated
+## This should be a seperate tool for analysis.
+## regex_val = ""; gene_sets = "";
+## c_rseed = '$section_tsne.tsne_rseed'
+## #if $section_tsne.genexp_select.use_gexpr == 'Yes':
+## gene_sets = '#for $gns in $section_tsne.genexp_select.geneset# $gns.genes.value _split_ #end for#'
+## regex_val = '$section_tsne.genexp_select.regex'
+## #end if
+
+                                 # Output settings #
+out.pdf.clusterqc = '$out_pdf_clusterqc'
+out.pdf.heatmaps = '$out_pdf_heatmaps'
+out.pdf.tsnes = '$out_pdf_tsnes'
+out.rds = '$out_rds'
+
         </configfile>
     </configfiles>
     <!-- Filter -->
     <inputs>
-        <section name="section_filter" title="Filtering and Normalisation" expanded="true" >
+        <section name="section_filter" title="Filtering, Annotation, and Normalisation" expanded="true" >
             <param name="inp_count" type="data" format="tsv" label="Count matrix" help="A spreadsheet file with the first row indicating cell IDs, and the first column indicating transcript or gene IDs" />
-            <conditional name="filtering" >
-                <param name="do_filter" type="select" label="Perform filtering?"  >
+            <param name="annot_dataset" type="select" label="Annotation Reference" >
+                <option value="mmusculus_gene_ensembl">Mouse (GRCm38.p6)</option>
+                <option value="drerio_gene_ensembl" >Zebrafish (GRCz11)</option>
+                <option value="hsapiens_gene_ensembl" >Human (GRCh38.p12)</option>
+            </param>
+            <conditional name="filt" >
+                <param name="doit" type="select" label="Perform filtering?"  >
                     <option value="T" selected="true" >Yes</option>
                     <option value="F" >No</option>
                 </param>
                 <when value="F" />
                 <when value="T" >
-                    <param name="remove_nonendog" type="text" label="Control gene name prefixes" help="If ERCC or other non-endogenous spike-in RNAs are within the data, please specify their prefixes (e.g. 'ERCC, HK00') in order to filter them out. (Leave blank if control genes were not used in the experiment.)" />
-                    <conditional name="default_filtering_select" >
-                        <param name="do_filter_defaults" type="select" label="Parameters" >
+                    <param name="filter_ercc" type="boolean" checked="true" label="Remove ERCC genes" />
+                    <param name="filter_mito" type="boolean" checked="true" label="Remove mitochondrial genes" />
+
+                    <param name="f_genes" type="text" label="List of explicit gene names to filter out" >
+                        <expand macro="sanitize_genes" />
+                    </param>
+                    <param name="c_genes" type="text" label="Discard any genes signficantly correlated or anti-correlated to these genes" >
+                        <expand macro="sanitize_genes" />
+                    </param>
+
+                    <conditional name="docc">
+                        <param name="docc_param" type="select" label="Perform cell-cycle correction?" >
+                            <option name="auto">Automatic</option>
+                            <option name="custom">Custom</option>
+                            <option name="no">No</option>
+                        </param>
+                        <when value="no" />
+                        <when value="auto" />
+                        <when value="custom" >
+                            <param name="genes" type="text" label="List of explicit gene names to correct against" >
+                                <expand macro="sanitize_genes" />
+                            </param>
+                        </when>
+                    </conditional>
+
+                    <conditional name="extra" >
+                        <param name="useit" type="select" label="Parameters" >
                             <option value="use_defaults" selected="true" >Use Defaults</option>
                             <option value="advanced_options" >Advanced Options</option >
                         </param>
@@ -175,11 +190,11 @@
                             <param name="mintotal" type="integer" value="3000" min="1" label="Minimum total transcripts" help="Discard cells with less than this number of total transcripts before normalisation." />
                             <param name="minexpr" type="integer" value="5" min="1" label="Minimum expressed genes" help="Discard genes that do not express a minimum of this number of transcripts after normalisation."/>
                             <param name="maxexpr" type="integer" value="500" min="0" label="Maximum expressed genes" help="Discard genes that express more than this number of transcripts after normalisation. Useful if genes have oversaturated counts derived from UMI data. Set to 0 to disable this step." />
-
                             <param name="minnumber" type="integer" value="1" label="Minimum Cells" help="Discard genes that do not have the minimum expressed transcripts in at least this number of cells" />
-
                             <param name="dsn" type="integer" value="1" min="1" optional="true" label="Downsample counts" help="Average transcripts across this many samples. If this is set to 1, then sampling noise should be comparable across cells. For higher values, the data approximates median normalisation." />
                             <param name="filter_rseed" type="integer" value="17000" min="0" label="Seed value (for reproducibility)" />
+                            <param name="hkn" type="boolean" truevalue="T" falsevalue="F" checked="false" label="Do Housekeeping Normalisation?" />
+                            <param name="sfn" type="boolean" truevalue="T" falsevalue="F" checked="false" label="Perform Size Factor Normalisation?" />
                         </when>
                     </conditional>
                 </when>
@@ -188,7 +203,7 @@
         </section>
 
         <!-- Kmeans -->
-        <section name="section_kmeans" title="Clustering (k-means)" expanded="true" >
+        <section name="section_clustering" title="Clustering" expanded="true" >
             <param name="metric" type="select" label="Distance metric">
                 <option value="pearson" selected="true" />
                 <option value="spearman" />
@@ -266,22 +281,20 @@
             </conditional>
             <param name="tsne_rseed" type="integer" min="1" value="15555" label="Seed (for reproducibility)" />
         </section>
+        <param name="out_rdat_query" type="select" label="Output R object for further analysis?" >
+            <option value="yes" selected="true" >Yes</option>
+            <option value="no">No</option>
+        </param>
     </inputs>
-
     <outputs>
-        <!-- Filter -->
-        <data name="out_table_filter" format="tabular" label="${tool.name} on ${on_string}: Filter Table" >
-            <filter>section_filter['filtering']['do_filter'] == "T"</filter>
+        <data name="out_pdf_clusterqc" format="pdf" label="${tool.name} on ${on_string}: Cluster QC" />
+        <data name="out_pdf_heatmaps" format="pdf" label="${tool.name} on ${on_string}: Heatmaps" />
+        <data name="out_pdf_tsnes" format="pdf" label="${tool.name} on ${on_string}: tSNEs" />
+        <data name="out_rdat" format="rdata" label="${tool.name} on ${on_string}: tSNE RData" >
+            <filter>str(out_rdat_query) == "yes"</filter>
         </data>
-        <!-- Outlier -->
-        <data name="out_table_outlier" format="tabular" label="${tool.name} on ${on_string}: Outliers" />
-        <!-- TSNE -->
-        <data name="out_html" format="html" label="${tool.name} on ${on_string}: Web Report" />
-        <data name="out_rdat_tsne" format="rdata" label="${tool.name} on ${on_string}: tSNE RData" />
     </outputs>
-
     <tests>
-        <!-- vanilla run on all but filter -->
         <test>
             <!-- Filter -->
             <param name="inp_count" value="transcript_counts_intestine_sub.tsv" />
@@ -375,7 +388,7 @@
 RaceID
 ******
 
-RaceID(v2) pipeline for scRNA, performs: 
+RaceID(v2) pipeline for scRNA, performs:
  * filtering
  * normalisation
  * k-means clustering
