@@ -1,9 +1,34 @@
-suppressPackageStartupMessages(library(scater))
-suppressPackageStartupMessages(require(biomaRt))
+#!/usr/bin/env R
+VERSION = "0.1"
+
+args = commandArgs(trailingOnly = T)
+args=c('/tmp/tmpDmJ3Xz/job_working_directory/000/16/tmp6Gnv_2')
+source(args[1])
+
+suppressPackageStartupMessages(
+    source(file.path(scripts.dir,"RaceID3_StemID2_class.R"))
+)
 
 options(repr.plot.height = 5)
 
+suppressPackageStartupMessages(library(scater))
+suppressPackageStartupMessages(require(biomaRt))
 
+
+## TSV to SCSeq
+#input_matrix <- read.table(
+#    count.matrix,
+#    stringsAsFaactors = F,
+#    na.strings=c("NA", "-", "?", "."),
+#    header=TRUE,
+#    row.names=1
+#)
+#input_matrix[is.na(input_matrix)] <- 0
+#sc <- SCseq(data.frame(input_matrix))
+sc <- readRDS(count.matrix)
+sc <- SCseq(sc)
+
+## Filtering
 new_sc <- filterdata(
     sc,
     mintotal = c.mintotal,
@@ -18,13 +43,15 @@ new_sc <- filterdata(
     FGenes = c.fgenes
 )
 
+## Annotation
 mart <- useMart(
     biomart = "ENSEMBL_MART_ENSEMBL",
-    dataset = c.dataset
+    dataset = ca.dataset
 )
 
 k <- getBM(
-    filters = "ensembl_gene_id",
+##    filters = "ensembl_gene_id",
+    filters = "external_gene_name",
     attributes = c(
         "ensembl_gene_id",
         "external_gene_name",
@@ -46,10 +73,10 @@ if (c.docc){
         vset <- c(c.docc.custom.cgenes, c.docc.custom.sgenes)
     }
     else {
-        ccg <- unique(k[k$name_1006 == "cell cycle",]$mgi_symbol)
-        cpg <- unique(k[k$name_1006 == "cell proliferation",]$mgi_symbol)
+        ccg <- unique(k[k$name_1006 == "cell cycle",]$ensembl_gene_id)
+        cpg <- unique(k[k$name_1006 == "cell proliferation",]$ensembl_gene_id)
         vset <- unique(c(ccg,cpg))
-        message("Number of cell-cycle and cell-proliferation to correct against", length(vset))
+        message("Number of cell-cycle and cell-proliferation to correct against: ", length(vset))
     }
 
     x <- CCcorrect(new_sc@fdata,
@@ -75,7 +102,7 @@ zzz <- capture.output(
         bootnr = ck.bootnr,
         metric = ck.metric,
         do.gap = ck.dogap,
-        sat = TRUE
+        sat = TRUE,
         SE.method = ck.semethod,
         SE.factor = ck.sefactor,
         B.gap = ck.bgap,

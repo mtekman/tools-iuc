@@ -6,14 +6,15 @@
     <expand macro="requirements" />
 
     <command detect_errors="exit_code"><![CDATA[
-    Rscript '$__tool_directory/scripts/allforone.R' '$rconf_main'
+    Rscript '@SCRIPTS_DIR@/raceid3_allforone.R' '$rconf_main'
     ]]></command>
 
     <configfiles>
         <configfile name="rconf_main">
-count_matrix = '$section_filter.inp_count'
+scripts.dir = '@SCRIPTS_DIR@'
+count.matrix = '$section_filter.inp_count'
 
-                                  # Filter settings #
+## Filter settings ##
 ## Defaults
 c.mintotal = 3000;
 c.minexpr = 5;
@@ -35,12 +36,12 @@ c.docc.custom.genes = c("Malat1", "Lars2", "Mki67", "Pcna-ps2", "Hsp90aa1", "Jun
 c.filter.ercc = TRUE
 c.filter.mito = TRUE
 
-## Annotation dataset
+## Annotation dataset ##
 ca.dataset = '$section_filter.annot_dataset'
 
 #if str($section_filter.filt.doit) == "T":
-c.filter.ercc = str($section_filter.filt.filter_ercc)
-c.filter.mito = str($section_filter.filt.filter_mito)
+c.filter.ercc = as.logical( '$section_filter.filt.filter_ercc.value' )
+c.filter.mito = as.logical( '$section_filter.filt.filter_mito.value')
 c.fgenes = c( $section_filter.filt.f_genes )
 c.cgenes = c( $section_filter.filt.c_genes )
 
@@ -71,13 +72,14 @@ c.rseed = as.integer( '$section_filter.filt.extra.filter_rseed' )
     #end if
 #end if
 
-                                # Regression #
+## Regression ##
 c.dobatchregression = TRUE
 c.dobatchregression.regexcapture = "P\\d+_B([0-9]+)_.*"
 
-                                # Clustering settings #
+## Clustering settings ##
+##
 ## Defaults
-ck.clustnr = 20;
+ck.clustnr = 30;
 ck.bootnr = 50;
 ck.metric = 'pearson';
 ck.dogap = FALSE;
@@ -90,20 +92,21 @@ ck.rseed = 17000;
 ## To incorporate
 ck.funcluster = 'kmedoids'
 
-
 ck.metric = '$section_clustering.metric'
-ck.cln = as.integer( '$section_clustering.cln' )
 ck.dogap = as.logical( '$section_clustering.gapstats.dogap.value' )
-#if $section_clustering.gapstats.dogap.value == "T":
+#if str($section_clustering.gapstats.dogap) == "T"
 ck.clustnr = as.integer( '$section_clustering.gapstats.clustnr' )
 ck.bgap = as.integer( '$section_clustering.gapstats.bgap' )
 ck.semethod = '$section_clustering.gapstats.semethod.value'
 ck.sefactor = as.numeric( '$section_clustering.gapstats.sefactor' )
+#elif str($section_clustering.gapstats.dogap) == "F"
+ck.cln = as.integer( '$section_clustering.cln' )
 #end if
 ck.bootnr = as.integer( '$section_clustering.bootnr' )
 ck.rseed = as.integer( '$section_clustering.kmeans_rseed' )
 
-                                # Outlier settings #
+## Outlier settings ##
+##
 ## Defaults
 co.outminc = 5;
 co.outlg = 2;
@@ -116,11 +119,10 @@ co.probthr = as.numeric( '$section_outlier.probthr' )
 co.outdistquant = as.numeric( '$section_outlier.probthr' )
 co.dorandforest = TRUE
 
-                               # Heatmap Settings #
+## Heatmap Settings ##
 cm.hmethod = 'single'
 
-
-                                # tSNE settings #
+## tSNE settings ##
 ## Defaults
 ## These here are settings for examining specific gene sets with the tSNE generated
 ## This should be a seperate tool for analysis.
@@ -131,18 +133,17 @@ cm.hmethod = 'single'
 ## regex_val = '$section_tsne.genexp_select.regex'
 ## #end if
 
-                                 # Output settings #
+## Output settings ##
 out.pdf.clusterqc = '$out_pdf_clusterqc'
 out.pdf.heatmaps = '$out_pdf_heatmaps'
 out.pdf.tsnes = '$out_pdf_tsnes'
-out.rds = '$out_rds'
-
+out.rds = '$out_rdat'
         </configfile>
     </configfiles>
     <!-- Filter -->
     <inputs>
         <section name="section_filter" title="Filtering, Annotation, and Normalisation" expanded="true" >
-            <param name="inp_count" type="data" format="tsv" label="Count matrix" help="A spreadsheet file with the first row indicating cell IDs, and the first column indicating transcript or gene IDs" />
+            <param name="inp_count" type="data" format="rdata" label="Count matrix" help="A spreadsheet file with the first row indicating cell IDs, and the first column indicating transcript or gene IDs" />
             <param name="annot_dataset" type="select" label="Annotation Reference" >
                 <option value="mmusculus_gene_ensembl">Mouse (GRCm38.p6)</option>
                 <option value="drerio_gene_ensembl" >Zebrafish (GRCz11)</option>
@@ -155,33 +156,8 @@ out.rds = '$out_rds'
                 </param>
                 <when value="F" />
                 <when value="T" >
-                    <param name="filter_ercc" type="boolean" checked="true" label="Remove ERCC genes" />
-                    <param name="filter_mito" type="boolean" checked="true" label="Remove mitochondrial genes" />
-
-                    <param name="f_genes" type="text" label="List of explicit gene names to filter out" >
-                        <expand macro="sanitize_genes" />
-                    </param>
-                    <param name="c_genes" type="text" label="Discard any genes signficantly correlated or anti-correlated to these genes" >
-                        <expand macro="sanitize_genes" />
-                    </param>
-
-                    <conditional name="docc">
-                        <param name="docc_param" type="select" label="Perform cell-cycle correction?" >
-                            <option name="auto">Automatic</option>
-                            <option name="custom">Custom</option>
-                            <option name="no">No</option>
-                        </param>
-                        <when value="no" />
-                        <when value="auto" />
-                        <when value="custom" >
-                            <param name="genes" type="text" label="List of explicit gene names to correct against" >
-                                <expand macro="sanitize_genes" />
-                            </param>
-                        </when>
-                    </conditional>
-
                     <conditional name="extra" >
-                        <param name="useit" type="select" label="Parameters" >
+                        <param name="useit" type="select" label="Filtering Parameters" >
                             <option value="use_defaults" selected="true" >Use Defaults</option>
                             <option value="advanced_options" >Advanced Options</option >
                         </param>
@@ -197,9 +173,33 @@ out.rds = '$out_rds'
                             <param name="sfn" type="boolean" truevalue="T" falsevalue="F" checked="false" label="Perform Size Factor Normalisation?" />
                         </when>
                     </conditional>
+
+                    <param name="filter_ercc" type="boolean" checked="true" label="Remove ERCC genes" />
+                    <param name="filter_mito" type="boolean" checked="true" label="Remove mitochondrial genes" />
+
+                    <param name="f_genes" type="text" label="List of explicit gene names to filter out" >
+                        <expand macro="sanitize_genes" />
+                    </param>
+                    <param name="c_genes" type="text" label="Discard any genes significantly correlated or anti-correlated to these genes" >
+                        <expand macro="sanitize_genes" />
+                    </param>
+
+                    <conditional name="docc">
+                        <param name="doit" type="select" label="Perform cell-cycle correction?" >
+                            <option value="auto">Automatic</option>
+                            <option value="custom">Custom</option>
+                            <option value="no">No</option>
+                        </param>
+                        <when value="no" />
+                        <when value="auto" />
+                        <when value="custom" >
+                            <param name="genes" type="text" label="List of explicit gene names to correct against" >
+                                <expand macro="sanitize_genes" />
+                            </param>
+                        </when>
+                    </conditional>
                 </when>
             </conditional>
-            <param name="filter_table_output" type="boolean" checked="false" label="Generate output table of filtered matrix?" />
         </section>
 
         <!-- Kmeans -->
@@ -216,17 +216,17 @@ out.rds = '$out_rds'
                 <option value="minkowski" />
             </param>
 
-            <param name="cln" type="integer" value="0" min="0" label="Number of clusters for k-means" help="Leave as zero to automatically determine the number based on gap statistics" />
-
             <conditional name="gapstats">
                 <param name="dogap" type="select" label="Use gap statistics to determine clusters" >
                     <option value="T" selected="true" >Yes</option>
                     <option value="F" >No</option>
                 </param>
 
-                <when value="F" />
+                <when value="F" >
+                    <param name="cln" type="integer" value="0" min="0" label="Number of clusters for k-means" />
+               </when>
                 <when value="T" >
-                    <param name="clustnr" type="integer" value="2" min="0" label="Maximum number of clusters for the computation of the gap statistic" help="If more major cell types are expected, a higher number than 2 should bde chosen." />
+                    <param name="clustnr" type="integer" value="30" min="0" label="Maximum number of clusters for the computation of the gap statistic" help="If more major cell types are expected, a higher number than 30 should be chosen." />
                     <param name="bgap" type="integer" value="50" min="1" label="Number of bootstraps to run the gap statistic calculation" />
                     <param name="semethod" type="select" label="Method used for determining first local maximum" >
                         <option value="Tibs2001SEmax" selected="true" />
@@ -309,23 +309,20 @@ out.rds = '$out_rds'
             <!-- ... With reduced minc -->
             <param name="inp_rdat_outlier" value="trans_outlier_in.rds" />
             <param name="outminc" value="1" />
-            <output name="out_table_outlier" value="out_outlier1.table" />
             <!-- tSNE -->
-            <output name="out_html" value="out_1.html" />
-            <output name="out_rdat_tsne" value="out_tsne1.rdat" />
+            <output name="out_pdf_heatmaps" value="out_1.html" />
+            <output name="out_rdat" value="out_tsne1.rdat" />
         </test>
         <!-- manual gap statistics -->
         <test>
             <!-- Filter -->
             <param name="inp_count" value="transcript_counts_intestine_sub.tsv" />
-            <param name="filter_table_output" value="T" />
             <!-- See message from previous test .. -->
             <param name="do_filter" value="T" />
             <param name="do_filter_defaults" value="advanced_options" />
             <param name="mintotal" value="10" />
             <param name="minexpr" value="1" />
             <param name="maxexpr" value="2000" />
-            <output name="out_table_filter" value="out_filter2.table" />
             <!-- Kmeans -->
             <!-- ... Auto gap with gap params -->
             <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" />
@@ -337,10 +334,9 @@ out.rds = '$out_rds'
             <!-- ... With reduced minc -->
             <param name="inp_rdat_outlier" value="trans_outlier_in.rds" />
             <param name="outminc" value="1" />
-            <output name="out_table_outlier" value="out_outlier2.table" />
             <!-- tSNE -->
-            <output name="out_html" value="out_2.html" />
-            <output name="out_rdat_tsne" value="out_tsne2.rdat" />
+            <output name="out_pdf_heatmaps" value="out_2.html" />
+            <output name="out_rdat" value="out_tsne2.rdat" />
         </test>
         <!-- complex run -->
         <test>
@@ -352,7 +348,6 @@ out.rds = '$out_rds'
             <param name="minexpr" value="1" />
             <param name="maxexpr" value="2000" />
             <param name="dsn" value="3" />
-            <output name="out_table_filter" value="out_filter3.table" />
             <!-- Kmeans -->
             <!-- ... Set k-value, no gap, no R obj, metrics and bootrepl. -->
             <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" />
@@ -367,7 +362,7 @@ out.rds = '$out_rds'
             <param name="probthr" value="1e-5" />
             <param name="outlg" value="10" />
             <param name="outdistquant" value="0.50" />
-            <output name="out_table_outlier" value="out_outlier3.table" />
+
             <!-- tSNE -->
             <param name="use_gexpr" value="Yes" />
             <repeat name="geneset">
@@ -377,8 +372,8 @@ out.rds = '$out_rds'
                 <param name="genes" value="0610010K14Rik__chr11+1500009L16Rik__chr10" />
             </repeat>
             <param name="regex" value="[^_]+__" />
-            <output name="out_html" value="out_3.html" />
-            <output name="out_rdat_tsne" value="out_tsne3.rdat" />
+            <output name="out_pdf_heatmaps" value="out_3.html" />
+            <output name="out_rdat" value="out_tsne3.rdat" />
         </test>
     </tests>
 
