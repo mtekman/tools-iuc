@@ -2,9 +2,10 @@
 VERSION = "0.1"
 
 args = commandArgs(trailingOnly = T)
-args=c('/tmp/tmpDmJ3Xz/job_working_directory/000/16/tmp6Gnv_2')
+#args=c('/tmp/tmpDmJ3Xz/job_working_directory/000/16/tmp6Gnv_2')
 source(args[1])
 
+require(methods)
 suppressPackageStartupMessages(
     source(file.path(scripts.dir,"RaceID3_StemID2_class.R"))
 )
@@ -115,7 +116,7 @@ zzz <- capture.output(
 
 
 ##rbind(new_sc@clusterpar)
-png(out.pdf.clusterqc)
+pdf(out.pdf.clusterqc)
 
 par(mfrow=c(2,2), mar=c(0,0,0,0))
 plotsaturation(new_sc,disp=F)

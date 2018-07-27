@@ -79,7 +79,7 @@ c.dobatchregression.regexcapture = "P\\d+_B([0-9]+)_.*"
 ## Clustering settings ##
 ##
 ## Defaults
-ck.clustnr = 30;
+ck.clustnr = 10;
 ck.bootnr = 50;
 ck.metric = 'pearson';
 ck.dogap = FALSE;
@@ -104,6 +104,13 @@ ck.cln = as.integer( '$section_clustering.cln' )
 #end if
 ck.bootnr = as.integer( '$section_clustering.bootnr' )
 ck.rseed = as.integer( '$section_clustering.kmeans_rseed' )
+
+
+## Need to implement comptsne settings
+ct.rseed = 15555
+ct.sammonmap = FALSE
+ct.fast = FALSE
+ct.perplexity = 30
 
 ## Outlier settings ##
 ##
@@ -379,11 +386,11 @@ out.rds = '$out_rdat'
 
     <help><![CDATA[
 
-******
-RaceID
-******
+*******
+RaceID3
+*******
 
-RaceID(v2) pipeline for scRNA, performs:
+RaceID pipeline for scRNA, performs:
  * filtering
  * normalisation
  * k-means clustering

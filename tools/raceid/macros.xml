@@ -9,9 +9,11 @@
         <requirements>
             <requirement type="package" >r</requirement>
             <requirement type="package" >r-tsne</requirement>
+            <requirement type="package" >r-rtsne</requirement>
             <requirement type="package" >r-pheatmap</requirement>
             <requirement type="package" >r-mass</requirement>
             <requirement type="package" >r-mclust</requirement>
+            <requirement type="package" >r-cluster</requirement>
             <requirement type="package" >r-flexmix</requirement>
             <requirement type="package" >r-lattice</requirement>
             <requirement type="package" >r-fpc</requirement>
@@ -19,6 +21,11 @@
             <requirement type="package" >r-permute</requirement>
             <requirement type="package" >r-amap</requirement>
             <requirement type="package" >r-locfit</requirement>
+            <requirement type="package" >r-vegan</requirement>
+            <requirement type="package" >bioconductor-scran</requirement>
+            <requirement type="package" >r-randomforest</requirement>
+            <requirement type="package" >bioconductor-genomeinfodbdata</requirement>
+            <requirement type="package" >bioconductor-deseq2</requirement>
         </requirements>
     </macro>
     <macro name="sanitize_genes" >
