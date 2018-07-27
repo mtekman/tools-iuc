@@ -4,11 +4,9 @@
         <import>macros.xml</import>
     </macros>
     <expand macro="requirements" />
-
     <command detect_errors="exit_code"><![CDATA[
-    Rscript '@SCRIPTS_DIR@/raceid3_allforone.R' '$rconf_main'
+        Rscript '@SCRIPTS_DIR@/raceid3_allforone.R' '$rconf_main' >&2
     ]]></command>
-
     <configfiles>
         <configfile name="rconf_main">
 scripts.dir = '@SCRIPTS_DIR@'
@@ -107,10 +105,18 @@ ck.rseed = as.integer( '$section_clustering.kmeans_rseed' )
 
 
 ## Need to implement comptsne settings
-ct.rseed = 15555
-ct.sammonmap = FALSE
 ct.fast = FALSE
+ct.sammonmap = FALSE
 ct.perplexity = 30
+ct.rseed = 15555
+ct.initial = TRUE
+
+ct.fast = as.logical( '$section_compt.fast.value' )
+ct.sammonmap = as.logical( '$section_compt.sammonmap.value' )
+ct.initial = as.logical( '$section_compt.compt_rand.initial.value' )
+#if str($section_compt.compt_rand.initial) == "No"
+ct.rseed = as.integer( '$section_compt.compt_rand.rseed' )
+#end if
 
 ## Outlier settings ##
 ##
@@ -128,17 +134,6 @@ co.dorandforest = TRUE
 
 ## Heatmap Settings ##
 cm.hmethod = 'single'
-
-## tSNE settings ##
-## Defaults
-## These here are settings for examining specific gene sets with the tSNE generated
-## This should be a seperate tool for analysis.
-## regex_val = ""; gene_sets = "";
-## c_rseed = '$section_tsne.tsne_rseed'
-## #if $section_tsne.genexp_select.use_gexpr == 'Yes':
-## gene_sets = '#for $gns in $section_tsne.genexp_select.geneset# $gns.genes.value _split_ #end for#'
-## regex_val = '$section_tsne.genexp_select.regex'
-## #end if
 
 ## Output settings ##
 out.pdf.clusterqc = '$out_pdf_clusterqc'
@@ -250,6 +245,22 @@ out.rds = '$out_rdat'
             <param name="bootnr" type="integer" value="50" min="1" label="Number of bootstraps for clustering" />
             <param name="kmeans_rseed" type="integer" value="17000" min="1" label="Seed value (for reproducibility)" />
         </section>
+        <!-- tSNE -->
+        <section name="section_compt" title="tSNE Settings" expanded="false" >
+            <param name="fast" type="boolean" checked="true" label="Use fast method?" />
+            <param name="sammonmap" type="boolean" checked="false" label="Use Sammon map to perform dimensional reduction instead of tSNE" />
+            <conditional name="compt_rand" >
+                <param name="initial" type="select" label="Initialise tSNE map with point-to-point distances" help="Uses classical multidimensional scaling instead of a random seed" >
+                    <option value="yes" selected="true" >Yes</option>
+                    <option value="no">No</option>
+                </param>
+                <when value="yes" />
+                <when value="no" >
+                    <param name="rseed" type="integer" value="15555"  label="Seed value (for reproducibility)" />
+                </when>
+            </conditional>
+        </section>
+        
         <!-- Outlier -->
         <section name="section_outlier" title="Outlier Detection" expanded="true" >
             <param name="outminc" type="integer" value="5" min="1" label="Expression cutoff threshold for outlier genes"  />
@@ -260,33 +271,6 @@ out.rds = '$out_rdat'
                 <option value="0.50">second (0.50)</option>
                 <option value="0.75">third (0.75)</option>
             </param>
-        </section>
-        <section name="section_tsne" title="tSNE plots" expanded="true" >
-            <!-- tSNE -->
-            <conditional name="genexp_select" >
-                <param name="use_gexpr" type="select" label="Highlight the expression of a set of (related) genes over all clusters?" >
-                    <option value="Yes" />
-                    <option value="No" selected="true" />
-                </param>
-                <when value="No" />
-                <when value="Yes" >
-                    <repeat name="geneset" title="Gene sets" >
-                        <param name="genes" type="text" label="Gene(s) of interest" help="e.g. 'Apoa1__chr9+Apoa1bp__chr6'" >
-                            <sanitizer invalid_char="" >
-                                <valid initial="string.letters,string.digits">
-                                    <add value="+" /><add value="_" /><add value="-" />
-                                </valid>
-                            </sanitizer>
-                        </param>
-                    </repeat>
-                    <param name="regex" type="text" value="" label="Regular expression to apply over cell labels to identify cell types" help="e.g. for barcodes [ cl_1_ACCAG, cl_1_ACGGA, cl_2_TTAC, ... ] can be grouped into [ cl_1, cl_2, ... ] by the expression: '_[ACTG]+', which removes the last '_' and any following characters belonging to A C T or G." >
-                        <sanitizer invalid_char="" >
-                            <valid initial="string.printable" />
-                        </sanitizer>
-                    </param>
-                </when>
-            </conditional>
-            <param name="tsne_rseed" type="integer" min="1" value="15555" label="Seed (for reproducibility)" />
         </section>
         <param name="out_rdat_query" type="select" label="Output R object for further analysis?" >
             <option value="yes" selected="true" >Yes</option>

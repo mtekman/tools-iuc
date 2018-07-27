@@ -7,7 +7,6 @@
     </macro>
     <macro name="requirements">
         <requirements>
-            <requirement type="package" >r</requirement>
             <requirement type="package" >r-tsne</requirement>
             <requirement type="package" >r-rtsne</requirement>
             <requirement type="package" >r-pheatmap</requirement>

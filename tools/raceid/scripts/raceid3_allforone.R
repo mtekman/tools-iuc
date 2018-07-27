@@ -2,7 +2,7 @@
 VERSION = "0.1"
 
 args = commandArgs(trailingOnly = T)
-#args=c('/tmp/tmpDmJ3Xz/job_working_directory/000/16/tmp6Gnv_2')
+#args=c('/tmp/tmp7xvC2l/job_working_directory/000/2/tmpEWGYM8')
 source(args[1])
 
 require(methods)
@@ -117,13 +117,11 @@ zzz <- capture.output(
 
 ##rbind(new_sc@clusterpar)
 pdf(out.pdf.clusterqc)
-
-par(mfrow=c(2,2), mar=c(0,0,0,0))
+par(mfrow=c(2,2), mar=c(4,4,3,3), cex.main = 0.00001, cex=0.9, cex.lab = 0.9)
 plotsaturation(new_sc,disp=F)
 if (ck.dogap) plotgap(new_sc)
 plotjaccard(new_sc)
 plotsilhouette(new_sc)
-
 dev.off()
 
 new_sc <- comptsne(
@@ -157,18 +155,22 @@ cdiff <- clustdiffgenes(new_sc, pvalue = .01)
 
 pdf(out.pdf.heatmaps)
 x <- clustheatmap(new_sc, final=F, hmethod= cm.hmethod)
+mtext("Heatmap - Initial Clustering", side=3, outer=F, line=1, col="black")
 x <- clustheatmap(new_sc, final=T, hmethod= cm.hmethod)
+mtext("Heatmap - Final Clustering", side=3, outer=F, line=1, col="black")
 dev.off()
 
 pdf(out.pdf.tsnes)
 plottsne(new_sc, final=F)
+mtext("tSNE - Initial Clustering", side=3, outer=F, line=1, col="black")
 plottsne(new_sc, final=T)
+mtext("tSNE - Final Clustering", side=3, outer=F, line=1, col="black")
 dev.off()
 
 ## return new_sc as the object for:
 ## --> cdiffgenes tool
 ## --> plotexptsne tool
-attributes(new_sc)$sce_obj <- sce
+## attributes(new_sc)$sce_obj <- sce
 attributes(new_sc)$kmart <- k
 attributes(new_sc)$cdiffer <- cdiff
 
