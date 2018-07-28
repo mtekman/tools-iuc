@@ -140,12 +140,13 @@ out.pdf.clusterqc = '$out_pdf_clusterqc'
 out.pdf.heatmaps = '$out_pdf_heatmaps'
 out.pdf.tsnes = '$out_pdf_tsnes'
 out.rds = '$out_rdat'
+out.genelist = '$out_clusterlist'
         </configfile>
     </configfiles>
     <!-- Filter -->
     <inputs>
         <section name="section_filter" title="Filtering, Annotation, and Normalisation" expanded="true" >
-            <param name="inp_count" type="data" format="rdata" label="Count matrix" help="A spreadsheet file with the first row indicating cell IDs, and the first column indicating transcript or gene IDs" />
+            <param name="inp_count" type="data" format="tsv,tabular" label="Count matrix" help="A spreadsheet file with the first row indicating cell IDs, and the first column indicating transcript or gene IDs" />
             <param name="annot_dataset" type="select" label="Annotation Reference" >
                 <option value="mmusculus_gene_ensembl">Mouse (GRCm38.p6)</option>
                 <option value="drerio_gene_ensembl" >Zebrafish (GRCz11)</option>
@@ -281,91 +282,94 @@ out.rds = '$out_rdat'
         <data name="out_pdf_clusterqc" format="pdf" label="${tool.name} on ${on_string}: Cluster QC" />
         <data name="out_pdf_heatmaps" format="pdf" label="${tool.name} on ${on_string}: Heatmaps" />
         <data name="out_pdf_tsnes" format="pdf" label="${tool.name} on ${on_string}: tSNEs" />
+        <data name="out_clusterlist" format="tabular" label="${tool.name} on ${on_string}: Genelists" />
         <data name="out_rdat" format="rdata" label="${tool.name} on ${on_string}: tSNE RData" >
             <filter>str(out_rdat_query) == "yes"</filter>
         </data>
     </outputs>
     <tests>
         <test>
-            <!-- Filter -->
-            <param name="inp_count" value="transcript_counts_intestine_sub.tsv" />
-            <!-- These test params are MANDATORY due to the reduced size of the
-                 input set (due to file size constraints) -->
-            <param name="do_filter" value="T" />
-            <param name="do_filter_defaults" value="advanced_options" />
-            <param name="mintotal" value="10" />
-            <param name="minexpr" value="1" />
-            <param name="maxexpr" value="2000" />
-            <!-- Outlier -->
-            <!-- ... With reduced minc -->
-            <param name="inp_rdat_outlier" value="trans_outlier_in.rds" />
-            <param name="outminc" value="1" />
-            <!-- tSNE -->
-            <output name="out_pdf_heatmaps" value="out_1.html" />
-            <output name="out_rdat" value="out_tsne1.rdat" />
+            <section name="section_filter">
+                <param name="inp_count" value="infsubset.half.tsv" />
+                <conditional name="filt" >
+                    <conditional name="extra" >
+                        <param name="useit" value="advanced_options" />
+                        <param name="mintotal" value="10" />
+                        <param name="minexpr" value="1" />
+                        <param name="maxexpr" value="2000" />
+                    </conditional>
+                </conditional>
+            </section>
+            <section name="section_outlier" >
+                <param name="outminc" value="1" />
+            </section>
+            <output name="out_pdf_clusterqc" value="test1.clusterqc.pdf" />
+            <output name="out_pdf_heatmaps" value="test1.heatmaps.pdf"/>
+            <output name="out_pdf_tsnes" value="test1.tsnes.pdf"/>
+            <output name="out_rdat" value="test1.rdat" />
+            <output name="out_clusterlist" value="test1.clusterlist.txt" />
         </test>
         <!-- manual gap statistics -->
-        <test>
+        <!-- <test> -->
             <!-- Filter -->
-            <param name="inp_count" value="transcript_counts_intestine_sub.tsv" />
+        <!--     <param name="inp_count" value="transcript_counts_intestine_sub.tsv" /> -->
             <!-- See message from previous test .. -->
-            <param name="do_filter" value="T" />
-            <param name="do_filter_defaults" value="advanced_options" />
-            <param name="mintotal" value="10" />
-            <param name="minexpr" value="1" />
-            <param name="maxexpr" value="2000" />
+        <!--     <param name="do_filter" value="T" /> -->
+        <!--     <param name="do_filter_defaults" value="advanced_options" /> -->
+        <!--     <param name="mintotal" value="10" /> -->
+        <!--     <param name="minexpr" value="1" /> -->
+        <!--     <param name="maxexpr" value="2000" /> -->
             <!-- Kmeans -->
             <!-- ... Auto gap with gap params -->
-            <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" />
-            <param name="clustnr" value="5" />
-            <param name="bgap" value="10" />
-            <param name="semethod" value="globalSEmax" />
-            <param name="sefactor" value="0.6" />
+        <!--     <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" /> -->
+        <!--     <param name="clustnr" value="5" /> -->
+        <!--     <param name="bgap" value="10" /> -->
+        <!--     <param name="semethod" value="globalSEmax" /> -->
+        <!--     <param name="sefactor" value="0.6" /> -->
             <!-- Outlier -->
             <!-- ... With reduced minc -->
-            <param name="inp_rdat_outlier" value="trans_outlier_in.rds" />
-            <param name="outminc" value="1" />
+        <!--     <param name="inp_rdat_outlier" value="trans_outlier_in.rds" /> -->
+        <!--     <param name="outminc" value="1" /> -->
             <!-- tSNE -->
-            <output name="out_pdf_heatmaps" value="out_2.html" />
-            <output name="out_rdat" value="out_tsne2.rdat" />
-        </test>
+        <!--     <output name="out_pdf_heatmaps" value="out_2.html" /> -->
+        <!--     <output name="out_rdat" value="out_tsne2.rdat" /> -->
+        <!-- </test> -->
         <!-- complex run -->
-        <test>
+        <!-- <test> -->
             <!-- Filter -->
-            <param name="inp_count" value="transcript_counts_intestine_sub.tsv" />
-            <param name="do_filter" value="T" />
-            <param name="do_filter_defaults" value="advanced_options" />
-            <param name="mintotal" value="10" />
-            <param name="minexpr" value="1" />
-            <param name="maxexpr" value="2000" />
-            <param name="dsn" value="3" />
+        <!--     <param name="inp_count" value="transcript_counts_intestine_sub.tsv" /> -->
+        <!--     <param name="do_filter" value="T" /> -->
+        <!--     <param name="do_filter_defaults" value="advanced_options" /> -->
+        <!--     <param name="mintotal" value="10" /> -->
+        <!--     <param name="minexpr" value="1" /> -->
+        <!--     <param name="maxexpr" value="2000" /> -->
+        <!--     <param name="dsn" value="3" /> -->
             <!-- Kmeans -->
             <!-- ... Set k-value, no gap, no R obj, metrics and bootrepl. -->
-            <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" />
-            <param name="metric" value="manhattan" />
-            <param name="cln" value="6" />
-            <param name="dogap" value="T" />
-            <param name="bootnr" value="10" />
+        <!--     <param name="inp_rdat_kmeans" value="trans_filter_ds.rds" /> -->
+        <!--     <param name="metric" value="manhattan" /> -->
+        <!--     <param name="cln" value="6" /> -->
+        <!--     <param name="dogap" value="T" /> -->
+        <!--     <param name="bootnr" value="10" /> -->
             <!-- Outlier -->
             <!-- ... No R out, other opts-->
-            <param name="inp_rdat_outlier" value="trans_outlier_in.rds" />
-            <param name="outminc" value="1" />
-            <param name="probthr" value="1e-5" />
-            <param name="outlg" value="10" />
-            <param name="outdistquant" value="0.50" />
-
+        <!--     <param name="inp_rdat_outlier" value="trans_outlier_in.rds" /> -->
+        <!--     <param name="outminc" value="1" /> -->
+        <!--     <param name="probthr" value="1e-5" /> -->
+        <!--     <param name="outlg" value="10" /> -->
+        <!--     <param name="outdistquant" value="0.50" /> -->
             <!-- tSNE -->
-            <param name="use_gexpr" value="Yes" />
-            <repeat name="geneset">
-                <param name="genes" value="1110007C09Rik__chr13+1110037F02Rik__chr4+1300002K09Rik__chr4" />
-            </repeat>
-            <repeat name="geneset">
-                <param name="genes" value="0610010K14Rik__chr11+1500009L16Rik__chr10" />
-            </repeat>
-            <param name="regex" value="[^_]+__" />
-            <output name="out_pdf_heatmaps" value="out_3.html" />
-            <output name="out_rdat" value="out_tsne3.rdat" />
-        </test>
+        <!--     <param name="use_gexpr" value="Yes" /> -->
+        <!--     <repeat name="geneset"> -->
+        <!--         <param name="genes" value="1110007C09Rik__chr13+1110037F02Rik__chr4+1300002K09Rik__chr4" /> -->
+        <!--     </repeat> -->
+        <!--     <repeat name="geneset"> -->
+        <!--         <param name="genes" value="0610010K14Rik__chr11+1500009L16Rik__chr10" /> -->
+        <!--     </repeat> -->
+        <!--     <param name="regex" value="[^_]+__" /> -->
+        <!--     <output name="out_pdf_heatmaps" value="out_3.html" /> -->
+        <!--     <output name="out_rdat" value="out_tsne3.rdat" /> -->
+        <!-- </test> -->
     </tests>
 
     <help><![CDATA[

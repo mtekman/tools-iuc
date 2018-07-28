@@ -2,7 +2,7 @@
 VERSION = "0.1"
 
 args = commandArgs(trailingOnly = T)
-#args=c('/tmp/tmp7xvC2l/job_working_directory/000/2/tmpEWGYM8')
+##args=c('/tmp/tmpjzvBES/job_working_directory/000/2/tmpe550Tg')
 source(args[1])
 
 require(methods)
@@ -17,17 +17,17 @@ suppressPackageStartupMessages(require(biomaRt))
 
 
 ## TSV to SCSeq
-#input_matrix <- read.table(
-#    count.matrix,
-#    stringsAsFaactors = F,
-#    na.strings=c("NA", "-", "?", "."),
-#    header=TRUE,
-#    row.names=1
-#)
-#input_matrix[is.na(input_matrix)] <- 0
-#sc <- SCseq(data.frame(input_matrix))
-sc <- readRDS(count.matrix)
-sc <- SCseq(sc)
+input_matrix <- read.table(
+    count.matrix,
+    stringsAsFactors = F,
+    na.strings=c("NA", "-", "?", "."),
+    header=TRUE,
+    row.names=1
+)
+input_matrix[is.na(input_matrix)] <- 0
+sc <- SCseq(data.frame(input_matrix))
+#sc <- readRDS(count.matrix)
+#sc <- SCseq(sc)
 
 ## Filtering
 new_sc <- filterdata(
