@@ -103,15 +103,15 @@
         </macro>
     </macros>
     <requirements>
-        <requirement type="package" version="3.4.1" >r</requirement>
+        <requirement type="package" version="0.24.2" >pandas</requirement>
     </requirements>
 
     <version_command><![CDATA[
-        Rscript '$__tool_directory__/scripts/table_compute.R' --version
+        python '$__tool_directory__/scripts/table_compute.py' --version
     ]]></version_command>
 
     <command detect_errors="exit_code"><![CDATA[
-        Rscript '$__tool_directory__/scripts/table_compute.R' '$userconf' > '$logfile'
+        python '$__tool_directory__/scripts/table_compute.py' '$userconf' > '$logfile'
     ]]></command>
     <configfiles>
         <configfile name="userconf"><![CDATA[
