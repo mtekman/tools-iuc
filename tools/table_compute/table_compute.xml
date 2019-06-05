@@ -103,6 +103,7 @@
         </macro>
     </macros>
     <requirements>
+        <requirement type="package" version="3.7.4" >configparser</requirement>
         <requirement type="package" version="0.24.2" >pandas</requirement>
     </requirements>
 
@@ -118,16 +119,17 @@
 [Default]
 reader_skip = 0
 narm = '$keep_nas' == 'True'
+user_mode = str($singtabop.use_type)
 
 [SingleTableOps]
 #if str($singtabop.use_type) == "single":
 reader_file = '$singtabop.input'
 reader_header = '$singtabop.reader_header' == 'True'
 reader_row_col = int( '$singtabop.reader_row_col' == 'True' )
-reader_ismatrix = '$singtabop.is_matrix' == 'True'
+reader_ismatrix = '$singtabop.is_matrix' == 'True'  ## IS THIS USED?
 
-    ## sort, select, filtersum, matrixapply, element, histogram
-user_mode = '$singtabop.user.mode.value'
+## sort, select, filtersum, matrixapply, element, histogram
+user_mode_single = '$singtabop.user.mode.value'
 
 [SingleTableOps.SELECT]
     #if $singtabop.user.mode.value == 'select':
@@ -136,10 +138,10 @@ select_rows_unique = !('$singtabop.user.select_rows_keepdupe' == 'True')  ## T,F
 select_cols_wanted = True ## All
 select_rows_wanted = True ## All
         #if $singtabop.user.select_cols_wanted:
-select_cols_wanted = string2vector( '$singtabop.user.select_cols_wanted' )
+select_cols_wanted = map(int, '$singtabop.user.select_cols_wanted'.split(','))
         #end if
         #if $singtabop.user.select_rows_wanted:
-select_rows_wanted = string2vector( '$singtabop.user.select_rows_wanted' )
+select_rows_wanted = map(int, '$singtabop.user.select_rows_wanted'.split(','))
         #end if
 
 [SingleTableOps.FILTERSUM]
@@ -191,14 +193,11 @@ fulltable_customop = '$singtabop.user.fulltable_custom_expr.value'.strip()
 
 [MultipleTableOps]
 #else if str($singtabop.use_type) == "multiple":
-user_mode = "whole_table_operations"
-
-[MultipleTableOps.LIST]
 multiple_tables = str($singtabop.use_type) == "multiple"
 fulltable_customop = '$singtabop.fulltable_custom_expr.value'.strip()
 
     #for $i, $s in enumerate($singtabop.tables)
-[MultipleTableOps.LIST.$i]
+[MultipleTableOps.TABLE.$i]
 file = '${s.input}'
 header = '${s.reader_header}' == 'True',
 row_names = int('${s.reader_row_col}' == 'True'),
