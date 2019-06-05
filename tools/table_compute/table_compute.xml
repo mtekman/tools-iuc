@@ -29,9 +29,9 @@
         </macro>
         <macro name="file_opts">
             <param name="input" type="data" format="tsv,tabular" label="Table" />
-            <param name="reader_header" type="boolean" checked="true" label="Has header for column names?" />
-            <param name="reader_row_col" type="boolean" checked="true" label="First column provides row names?" help="Rows will be automatically numbered if false." />
-            <param name="is_matrix" type="boolean" checked="true" label="All values in the table are of the same type (e.g. all numeric, or all text, etc)" />
+            <param name="reader_header" type="boolean" truevalue="True" falsevalue="False" checked="true" label="Has header for column names?" />
+            <param name="reader_row_col" type="boolean" truevalue="True" falsevalue="False" checked="true" label="First column provides row names?" help="Rows will be automatically numbered if false." />
+            <param name="is_matrix" type="boolean" truevalue="True" falsevalue="False" checked="true" label="All values in the table are of the same type (e.g. all numeric, or all text, etc)" />
         </macro>
         <!-- element value macro -->
         <macro name="elem_val" >
@@ -115,88 +115,83 @@
     ]]></command>
     <configfiles>
         <configfile name="userconf"><![CDATA[
-options(stringsAsFactors=FALSE)
-reader.skip = 0
-narm = as.logical('$keep_nas')
-multiple.tables = c()
+import pandas as pd
+
+reader_skip = 0
+narm = '$keep_nas' == 'True'
+multiple_tables = []
 
 ## Single Table Operations
 #if str($singtabop.use_type) == "single":
-    reader.file = '$singtabop.input'
-    reader.header = as.logical( '$singtabop.reader_header' )
-    reader.row.col = as.integer( as.logical('$singtabop.reader_row_col') )
-    reader.ismatrix = as.logical( '$singtabop.is_matrix' )
+    reader_file = '$singtabop.input'
+    reader_header = '$singtabop.reader_header' == 'True'
+    reader_row_col = int( '$singtabop.reader_row_col' == 'True' )
+    reader_ismatrix = '$singtabop.is_matrix' == 'True'
 
     ## sort, select, filtersum, matrixapply, element, histogram
-    user.mode = '$singtabop.user.mode.value'
+    user_mode = '$singtabop.user.mode.value'
 
     #if $singtabop.user.mode.value == 'select':
-        select.cols.unique = !(as.logical( '$singtabop.user.select_cols_keepdupe' ))  ## T,F
-        select.rows.unique = !(as.logical( '$singtabop.user.select_rows_keepdupe' ))  ## T,F
-        select.cols.wanted = as.logical( 'T' ) ## All
-        select.rows.wanted = as.logical( 'T' ) ## All
+        select_cols_unique = !('$singtabop.user.select_cols_keepdupe' == 'True')  ## T,F
+        select_rows_unique = !('$singtabop.user.select_rows_keepdupe' == 'True')  ## T,F
+        select_cols_wanted = True ## All
+        select_rows_wanted = True ## All
         #if $singtabop.user.select_cols_wanted:
-            select.cols.wanted = string2vector( '$singtabop.user.select_cols_wanted' )
+            select_cols_wanted = string2vector( '$singtabop.user.select_cols_wanted' )
         #end if
         #if $singtabop.user.select_rows_wanted:
-            select.rows.wanted = string2vector( '$singtabop.user.select_rows_wanted' )
+            select_rows_wanted = string2vector( '$singtabop.user.select_rows_wanted' )
         #end if
 
     #else if $singtabop.user.mode.value == 'filtersum':
-        filtersum.op = '$singtabop.user.filtersum_op.value'  ## TwoValueBooleanOperator
-        filtersum.mode = '$singtabop.user.filtersum_mode.value'  ## rowSum, colSum
-        filtersum.value = as.numeric( '$singtabop.user.filtersum_value' )
+        filtersum_op = '$singtabop.user.filtersum_op.value'  ## TwoValueBooleanOperator
+        filtersum_mode = '$singtabop.user.filtersum_mode.value'  ## rowSum, colSum
+        filtersum_value = float( '$singtabop.user.filtersum_value' )
     #else if $singtabop.user.mode.value == 'matrixapply':
-        matrixapply.dimension = as.integer('$singtabop.user.dimension.value')
-        matrixapply.custom = as.logical('$singtabop.user.matrixapply_func.use_custom.value')
-        matrixapply.custom.func = NULL
-        matrixapply.op = NULL
+        matrixapply_dimension = int('$singtabop.user.dimension.value')
+        matrixapply_custom = '$singtabop.user.matrixapply_func.use_custom.value' == 'True'
+        matrixapply_custom_func = None
+        matrixapply_op = None
         #if $singtabop.user.matrixapply_func.use_custom.value == 'T':
-            matrixapply.custom.func = '$singtabop.user.matrixapply_func.custom_func.value'
+            matrixapply_custom_func = '$singtabop.user.matrixapply_func.custom_func.value'
         #else
-            matrixapply.op = '$singtabop.user.matrixapply_func.inbuilt_op.value'
+            matrixapply_op = '$singtabop.user.matrixapply_func.inbuilt_op.value'
         #end if
     #else if $singtabop.user.mode.value == 'element':
-        element.op = '$singtabop.user.elem_val.element_op'
-        element.value = NULL
+        element_op = '$singtabop.user.elem_val.element_op'
+        element_value = None
         #if str($singtabop.user.elem_val.element_op) != "T":
-            element.value = '$singtabop.user.elem_val.element_value'
+            element_value = '$singtabop.user.elem_val.element_value'
         #end if
-        element.replace = NULL
-        element.modify.op = NULL
-        element.scale.op = NULL
-        element.scale.value = NULL
-        element.customop = NULL
-        element.mode = '$singtabop.user.element.mode.value'
+        element_replace = None
+        element_modify_op = None
+        element_scale_op = None
+        element_scale_value = None
+        element_customop = None
+        element_mode = '$singtabop.user.element.mode.value'
         #if str($singtabop.user.element.mode) == "replace":
-            element.replace = '$singtabop.user.element.replace_value'
+            element_replace = '$singtabop.user.element.replace_value'
         #else if str($singtabop.user.element.mode) == "modify":
-            element.modify.op = '$singtabop.user.element.modify_op.value'
+            element_modify_op = '$singtabop.user.element.modify_op.value'
         #else if str($singtabop.user.element.mode) == "scale":
-            element.scale.op = '$singtabop.user.element.scale_op.value'
-            element.scale.value = as.numeric( '$singtabop.user.element.scale_value' )
+            element_scale_op = '$singtabop.user.element.scale_op.value'
+            element_scale_value = float( '$singtabop.user.element.scale_value' )
         #else if str($singtabop.user.element.mode) == "custom":
-            element.customop = trimws('$singtabop.user.element.custom_expr.value')
+            element_customop = '$singtabop.user.element.custom_expr.value'.strip()
         #end if
     #else if $singtabop.user.mode.value == 'fulltable':
-        fulltable.customop = trimws('$singtabop.user.fulltable_custom_expr.value')
+        fulltable_customop = '$singtabop.user.fulltable_custom_expr.value'.strip()
     #end if
 
 #else if str($singtabop.use_type) == "multiple":
-    user.mode = "whole_table_operations"
-    multiple.tables = data.frame(file=character(), header=logical(), row.names=integer(), skip=integer())
+    user_mode = "whole_table_operations"
+    multiple_tables = pd.DataFrame(columns=['file','header','row.names','ismatrix','skip'])
     #for $i, $s in enumerate($singtabop.tables)
-        multiple.tables <- rbind(
-            multiple.tables, 
-            list(file='${s.input}',
-                 header=as.logical('${s.reader_header}'),
-                 row.names=as.integer(as.logical('${s.reader_row_col}')),
-                 ismatrix=as.logical( '${s.is_matrix}' ),
-                 skip=reader.skip
-            )
-        )
+        tmp = pd.DataFrame([['${s.input}', '${s.reader_header}' == 'True', int('${s.reader_row_col}' == 'True'), '${s.is_matrix}' == 'True', reader_skip]],
+            columns=['file','header','row.names','ismatrix','skip'])
+        multiple_tables = multiple_tables.append(tmp)
     #end for
-    fulltable.customop = trimws('$singtabop.fulltable_custom_expr.value')
+    fulltable_customop = '$singtabop.fulltable_custom_expr.value'.strip()
 #end if
 
 outtable = '$table'
@@ -226,8 +221,8 @@ outtable = '$table'
                         <param name="select_rows_wanted" type="text" optional="true" label="List of rows to keep" help="The same rules apply as above" >
                             <expand macro="sanitizer_vectorpositive" />
                         </param>
-                        <param name="select_cols_keepdupe" type="boolean" checked="true" label="Keep duplicate columns" help="Keep duplicates when specifying ranges (e.g. if set to false; 1:5,3:6  will yield 1,2,3,4,5,6 instead of 1,2,3,4,5,3,4,5,6). Note that duplicate fields will be post-enumerated  (e.g. a table with three copies of 'col22' will be labelled 'col22' 'col22.1' and 'col22.2' " />
-                        <param name="select_rows_keepdupe" type="boolean" checked="true" label="Keep duplicate rows" help="The same rules apply as above" />
+                        <param name="select_cols_keepdupe" type="boolean" truevalue="True" falsevalue="False" checked="true" label="Keep duplicate columns" help="Keep duplicates when specifying ranges (e.g. if set to false; 1:5,3:6  will yield 1,2,3,4,5,6 instead of 1,2,3,4,5,3,4,5,6). Note that duplicate fields will be post-enumerated  (e.g. a table with three copies of 'col22' will be labelled 'col22' 'col22.1' and 'col22.2' " />
+                        <param name="select_rows_keepdupe" type="boolean" truevalue="True" falsevalue="False" checked="true" label="Keep duplicate rows" help="The same rules apply as above" />
                     </when>
                     <when value="filtersum" >
                         <param name="filtersum_mode" type="select" label="Filter by" help="See Example #2 for an example of using this mode." >
@@ -338,8 +333,8 @@ outtable = '$table'
                 </param>
             </when>
         </conditional>
-        <param name="keep_nas" type="boolean" checked="true" label="Ignore NA values" />
-        <param name="show_logfile" type="boolean" checked="false" label="Produce logfile?" />
+        <param name="keep_nas" type="boolean" truevalue="True" falsevalue="False" checked="true" label="Ignore NA values" />
+        <param name="show_logfile" type="boolean" truevalue="True" falsevalue="False" checked="false" label="Produce logfile?" />
     </inputs>
     <outputs>
         <data name="table" format="tabular" label="${tool.name} on ${on_string}" />
