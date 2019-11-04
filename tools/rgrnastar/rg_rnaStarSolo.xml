@@ -64,7 +64,7 @@
     #end if
 
     ## Droplet is the only mode available for now
-    --soloType Droplet
+    --soloType CB_UMI_Simple
 
     ## 1 - check length of barcode, 0 - do not check
     ## Good for checking custom chemistries
@@ -91,6 +91,17 @@
     --soloStrand '$solo.soloStrand'
     --soloFeatures '$solo.soloFeatures'
     --soloUMIdedup '$solo.soloUMIdedup'
+    --soloCBmatchWLtype '$solo.soloCBmatchWLtype'
+    --soloUMIfiltering '$filter.soloUMIfiltering'
+    #set $cellfilter = '$filter.cellfilter.use'
+    #if $cellfilter == "CellRanger2.2":
+       --soloCellFilter CellRanger2.2 '$filter.cellfilter.numcells' '$filter.cellfilter.umipercmax' '$filter.cellfilter.ratio'
+    #else if '$cellfilter' == "TopCells":
+       --soloCellFilter TopCells '$filter.cellfilter.numcells'
+    #else if '$cellfilter' == "None":
+       --soloCellFilter '$None'
+    #end if
+
     ]]></command>
     <inputs>
         <conditional name="input_types" >
@@ -126,6 +137,16 @@
                     <param argument="--soloUMIlen" type="integer" min="1" value="10" label="UMI Length" />
                 </when>
             </conditional>
+
+            <!-- Todo: soloAdapterMismatchesNmax: 1, soloAdapterSequence: "-", soloUMIposition "-", soloCBposition "-", soloType... -->
+
+            <param argument="--soloCBmatchWLtype" type="select" label="Matching method of Cell Barcodes to WhiteList"
+                   help="CellBarcodes (CBs) normally count Exact matches, but Mismatches of 1 basepair (1MM) can also be used in certain circumstances." >
+                   <option value="Exact" >(Exact) CBs count only Exact</option>
+                   <option value="1MM" >(1MM) CBs with 1MM allowed, but must have at least 1 Exact</option>
+                   <option value="1MM_multi" selected="true" >(1MM_multi) Same as 1MM, but if multiply matched they are assigned to one CB (CellRanger 2.2.0)</option>
+                   <option value="1MM_multi_pseudocounts" >(1MM_Multi_pseudocounts) Same as 1MM_multi, but if multiply matched all matching CBs have a pseudocount added (CellRanger 3.x.x)</option>
+            </param>
             <param argument="--soloStrand" type="select" label="Strandedness of Library" help="Unstranded has no strand information, Forward has the read strand the same as the original RNA molecule, Reverse has the read strand opposite to the original RNA molecule">
                 <option value="Unstranded" />
                 <option value="Forward" selected="true" />
@@ -135,13 +156,37 @@
                 <option value="Gene" selected="true">Gene: Count reads matching the Gene Transcript</option>
                 <option value="SJ" >Splice Junctions: Count reads at exon-intron junctions</option>
                 <option value="GeneFull" >Full: Count all reads overlapping genes' exons and introns</option>
+                <option value="Transcript3p" >Transcript3p: Quantification of 3' protocols</option>
             </param>
-            <param argument="--soloUMIdedup" type="select" label="UMI deduplication (collapsing) algorithm" help="All has all UMIs with 1 mismatch distance to each other collapsed, Directional follows the 'directional' method given in UMI-tools, None has UMIs with 1 mismatch distance to others not collapsed">
+            <param argument="--soloUMIdedup" type="select" label="UMI deduplication (collapsing) algorithm" help="All has all UMIs with 1 mismatch distance to each other collapsed, Directional follows the 'directional' method given in UMI-tools, Exact has UMIs with 1 mismatch distance to others not collapsed">
                 <option value="1MM_All" selected="true">All</option>
                 <option value="1MM_Directional" >Directional</option>
-                <option value="1MM_NotCollapsed" >None</option>
+                <option value="Exact" >Exact</option>
             </param>
             <param argument="--soloBarcodeReadLength" type="boolean" truevalue="1" falsevalue="0" checked="true" label="Barcode Size is same size of the Read" help="Disable this if your R1 barcodes contain poly-T bases after the barcode sequence." />
+        </section>
+        <section name="filter" title="Filter Settings" expanded="true" >
+            <param argument="--soloUMIfiltering" type="select" label="Type of UMI filtering"
+                   help="Basic filtering removes UMIs with N and homopolymers (CellRanger 2.2.0). Multi Gene filtering removes the lower-count of UMIs that map to more than one gene (CellRanger 3.x.x)" >
+                <option value="-" selected="true">Basic</option>
+                <option value="MultiGeneUMI">Multi Gene</option>
+            </param>
+            <conditional name="cellfilter" >
+                <param name="use" label="Type of Cell filtering" >
+                    <option value="CellRanger2.2" selected="true" >Simple CellRanger 2.2 filtering</option>
+                    <option value="TopCells">Only the top cells (by UMI count)</option>
+                    <option value="None">No filtering</option>
+                </param>
+                <when value="CellRanger2.2">
+                    <param name="numcells" type="integer" min="1" value="3000" label="Expected number of cells" />
+                    <param name="umipercmax" type="float" min="0" max="1" value="0.99" label="Maximum percentile for UMI counts" />
+                    <param name="ratio" type="float" min="1" value="10" label="Max:Min ratio of UMI counts" />
+                </when>
+                <when value="TopCells">
+                    <param name="numcells" type="integer" min="1" value="3000" label="Expected number of cells" />
+                </when>
+                <when value="None" />
+            </conditional>
         </section>
     </inputs>
     <outputs>
@@ -206,147 +251,147 @@
                 </assert_contents>
             </output>
         </test>
-        <test expect_num_outputs="5">
-            <conditional name="input_types">
-                <param name="use" value="repeat" />
-                <repeat name="input_repeats" >
-                    <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                    <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                </repeat>
-            </conditional>
-            <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" />
-            <conditional name="refGenomeSource">
-                <param name="geneSource" value="history" />
-                <param name="genomeFastaFiles" value="SNORD83B.22.fa" />
-                <param name="genomeSAindexNbases" value="4" />
-                <conditional name="GTFconditional">
-                    <param name="GTFselect" value="with-gtf" />
-                    <param name="sjdbOverhang" value="75" />
-                    <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/>
-                </conditional>
-            </conditional>
-            <section name="solo" >
-                <conditional name="params">
-                    <param name="chemistry" value="custom" />
-                    <param name="soloCBstart" value="1" />
-                    <param name="soloCBlen" value="16" />
-                    <param name="soloUMIstart" value="17" />
-                    <param name="soloUMIlen" value="10" />
-                </conditional>
-                <param name="soloStrand" value="Forward" />
-                <param name="soloFeatures" value="GeneFull" />
-                <param name="soloUMIdedup" value="1MM_Directional" />
-            </section>
-            <output name="output_barcodes" >
-                <assert_contents>
-                    <has_line line="TTTGTCATCTTAGAGC" />
-                    <has_line line="TTTGTCATCTTTCCTC" />
-                </assert_contents>
-            </output>
-        </test>
-        <test expect_num_outputs="5">
-            <!-- Multiple repeats test -->
-            <conditional name="input_types">
-                <param name="use" value="repeat" />
-                <repeat name="input_repeats" >
-                    <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                    <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                </repeat>
-                <repeat name="input_repeats" >
-                    <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                    <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                </repeat>
-                <repeat name="input_repeats" >
-                    <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                    <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                </repeat>
-            </conditional>
-            <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" />
-            <conditional name="refGenomeSource">
-                <param name="geneSource" value="history" />
-                <param name="genomeFastaFiles" value="SNORD83B.22.fa" />
-                <param name="genomeSAindexNbases" value="4" />
-                <conditional name="GTFconditional">
-                    <param name="GTFselect" value="with-gtf" />
-                    <param name="sjdbOverhang" value="75" />
-                    <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/>
-                </conditional>
-            </conditional>
-            <section name="solo" >
-                <conditional name="params">
-                    <param name="chemistry" value="custom" />
-                    <param name="soloCBstart" value="1" />
-                    <param name="soloCBlen" value="16" />
-                    <param name="soloUMIstart" value="17" />
-                    <param name="soloUMIlen" value="10" />
-                </conditional>
-                <param name="soloStrand" value="Forward" />
-                <param name="soloFeatures" value="GeneFull" />
-                <param name="soloUMIdedup" value="1MM_Directional" />
-            </section>
-            <output name="output_barcodes" >
-                <assert_contents>
-                    <has_line line="TTTGTCATCTTAGAGC" />
-                    <has_line line="TTTGTCATCTTTCCTC" />
-                </assert_contents>
-            </output>
-        </test>
-        <test expect_num_outputs="5">
-            <!-- Same as the test before but with a collection of pairs -->
-            <conditional name="input_types">
-                <param name="use" value="list_paired" />
-                <param name="input_repeats" >
-                    <collection type="list:paired">
-                        <element name="Pair1">
-                            <collection type="paired">
-                                <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                                <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                            </collection>
-                        </element>
-                        <element name="Pair2">
-                            <collection type="paired">
-                                <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                                <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" />
-                            </collection>
-                        </element>
-                        <!-- Planemo does not support more than 2 elements in a list of pairs -->
-                        <!-- <element name="Pair3"> -->
-                        <!--     <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
-                        <!--     <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
-                        <!-- </element> -->
-                    </collection>
-                </param>
-            </conditional>
-            <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" />
-            <conditional name="refGenomeSource">
-                <param name="geneSource" value="history" />
-                <param name="genomeFastaFiles" value="SNORD83B.22.fa" />
-                <param name="genomeSAindexNbases" value="4" />
-                <conditional name="GTFconditional">
-                    <param name="GTFselect" value="with-gtf" />
-                    <param name="sjdbOverhang" value="75" />
-                    <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/>
-                </conditional>
-            </conditional>
-            <section name="solo" >
-                <conditional name="params">
-                    <param name="chemistry" value="custom" />
-                    <param name="soloCBstart" value="1" />
-                    <param name="soloCBlen" value="16" />
-                    <param name="soloUMIstart" value="17" />
-                    <param name="soloUMIlen" value="10" />
-                </conditional>
-                <param name="soloStrand" value="Forward" />
-                <param name="soloFeatures" value="GeneFull" />
-                <param name="soloUMIdedup" value="1MM_Directional" />
-            </section>
-            <output name="output_barcodes" >
-                <assert_contents>
-                    <has_line line="TTTGTCATCTTAGAGC" />
-                    <has_line line="TTTGTCATCTTTCCTC" />
-                </assert_contents>
-            </output>
-        </test>
+    <!--     <test expect_num_outputs="5"> -->
+    <!--         <conditional name="input_types"> -->
+    <!--             <param name="use" value="repeat" /> -->
+    <!--             <repeat name="input_repeats" > -->
+    <!--                 <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                 <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--             </repeat> -->
+    <!--         </conditional> -->
+    <!--         <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" /> -->
+    <!--         <conditional name="refGenomeSource"> -->
+    <!--             <param name="geneSource" value="history" /> -->
+    <!--             <param name="genomeFastaFiles" value="SNORD83B.22.fa" /> -->
+    <!--             <param name="genomeSAindexNbases" value="4" /> -->
+    <!--             <conditional name="GTFconditional"> -->
+    <!--                 <param name="GTFselect" value="with-gtf" /> -->
+    <!--                 <param name="sjdbOverhang" value="75" /> -->
+    <!--                 <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/> -->
+    <!--             </conditional> -->
+    <!--         </conditional> -->
+    <!--         <section name="solo" > -->
+    <!--             <conditional name="params"> -->
+    <!--                 <param name="chemistry" value="custom" /> -->
+    <!--                 <param name="soloCBstart" value="1" /> -->
+    <!--                 <param name="soloCBlen" value="16" /> -->
+    <!--                 <param name="soloUMIstart" value="17" /> -->
+    <!--                 <param name="soloUMIlen" value="10" /> -->
+    <!--             </conditional> -->
+    <!--             <param name="soloStrand" value="Forward" /> -->
+    <!--             <param name="soloFeatures" value="GeneFull" /> -->
+    <!--             <param name="soloUMIdedup" value="1MM_Directional" /> -->
+    <!--         </section> -->
+    <!--         <output name="output_barcodes" > -->
+    <!--             <assert_contents> -->
+    <!--                 <has_line line="TTTGTCATCTTAGAGC" /> -->
+    <!--                 <has_line line="TTTGTCATCTTTCCTC" /> -->
+    <!--             </assert_contents> -->
+    <!--         </output> -->
+    <!--     </test> -->
+    <!--     <test expect_num_outputs="5"> -->
+    <!--         <!-\- Multiple repeats test -\-> -->
+    <!--         <conditional name="input_types"> -->
+    <!--             <param name="use" value="repeat" /> -->
+    <!--             <repeat name="input_repeats" > -->
+    <!--                 <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                 <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--             </repeat> -->
+    <!--             <repeat name="input_repeats" > -->
+    <!--                 <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                 <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--             </repeat> -->
+    <!--             <repeat name="input_repeats" > -->
+    <!--                 <param name="input1" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                 <param name="input2" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--             </repeat> -->
+    <!--         </conditional> -->
+    <!--         <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" /> -->
+    <!--         <conditional name="refGenomeSource"> -->
+    <!--             <param name="geneSource" value="history" /> -->
+    <!--             <param name="genomeFastaFiles" value="SNORD83B.22.fa" /> -->
+    <!--             <param name="genomeSAindexNbases" value="4" /> -->
+    <!--             <conditional name="GTFconditional"> -->
+    <!--                 <param name="GTFselect" value="with-gtf" /> -->
+    <!--                 <param name="sjdbOverhang" value="75" /> -->
+    <!--                 <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/> -->
+    <!--             </conditional> -->
+    <!--         </conditional> -->
+    <!--         <section name="solo" > -->
+    <!--             <conditional name="params"> -->
+    <!--                 <param name="chemistry" value="custom" /> -->
+    <!--                 <param name="soloCBstart" value="1" /> -->
+    <!--                 <param name="soloCBlen" value="16" /> -->
+    <!--                 <param name="soloUMIstart" value="17" /> -->
+    <!--                 <param name="soloUMIlen" value="10" /> -->
+    <!--             </conditional> -->
+    <!--             <param name="soloStrand" value="Forward" /> -->
+    <!--             <param name="soloFeatures" value="GeneFull" /> -->
+    <!--             <param name="soloUMIdedup" value="1MM_Directional" /> -->
+    <!--         </section> -->
+    <!--         <output name="output_barcodes" > -->
+    <!--             <assert_contents> -->
+    <!--                 <has_line line="TTTGTCATCTTAGAGC" /> -->
+    <!--                 <has_line line="TTTGTCATCTTTCCTC" /> -->
+    <!--             </assert_contents> -->
+    <!--         </output> -->
+    <!--     </test> -->
+    <!--     <test expect_num_outputs="5"> -->
+    <!--         <!-\- Same as the test before but with a collection of pairs -\-> -->
+    <!--         <conditional name="input_types"> -->
+    <!--             <param name="use" value="list_paired" /> -->
+    <!--             <param name="input_repeats" > -->
+    <!--                 <collection type="list:paired"> -->
+    <!--                     <element name="Pair1"> -->
+    <!--                         <collection type="paired"> -->
+    <!--                             <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                             <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                         </collection> -->
+    <!--                     </element> -->
+    <!--                     <element name="Pair2"> -->
+    <!--                         <collection type="paired"> -->
+    <!--                             <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                             <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -->
+    <!--                         </collection> -->
+    <!--                     </element> -->
+    <!--                     <!-\- Planemo does not support more than 2 elements in a list of pairs -\-> -->
+    <!--                     <!-\- <element name="Pair3"> -\-> -->
+    <!--                     <!-\-     <element name="forward" value="41737_R1_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -\-> -->
+    <!--                     <!-\-     <element name="reverse" value="41737_R2_sub240k.fastq.gz" ftype="fastqsanger.gz" /> -\-> -->
+    <!--                     <!-\- </element> -\-> -->
+    <!--                 </collection> -->
+    <!--             </param> -->
+    <!--         </conditional> -->
+    <!--         <param name="soloCBwhitelist" value="737K-august-2016.small.txt.gz" /> -->
+    <!--         <conditional name="refGenomeSource"> -->
+    <!--             <param name="geneSource" value="history" /> -->
+    <!--             <param name="genomeFastaFiles" value="SNORD83B.22.fa" /> -->
+    <!--             <param name="genomeSAindexNbases" value="4" /> -->
+    <!--             <conditional name="GTFconditional"> -->
+    <!--                 <param name="GTFselect" value="with-gtf" /> -->
+    <!--                 <param name="sjdbOverhang" value="75" /> -->
+    <!--                 <param name="sjdbGTFfile" value="SNORD83B.22.gtf" ftype="gtf"/> -->
+    <!--             </conditional> -->
+    <!--         </conditional> -->
+    <!--         <section name="solo" > -->
+    <!--             <conditional name="params"> -->
+    <!--                 <param name="chemistry" value="custom" /> -->
+    <!--                 <param name="soloCBstart" value="1" /> -->
+    <!--                 <param name="soloCBlen" value="16" /> -->
+    <!--                 <param name="soloUMIstart" value="17" /> -->
+    <!--                 <param name="soloUMIlen" value="10" /> -->
+    <!--             </conditional> -->
+    <!--             <param name="soloStrand" value="Forward" /> -->
+    <!--             <param name="soloFeatures" value="GeneFull" /> -->
+    <!--             <param name="soloUMIdedup" value="1MM_Directional" /> -->
+    <!--         </section> -->
+    <!--         <output name="output_barcodes" > -->
+    <!--             <assert_contents> -->
+    <!--                 <has_line line="TTTGTCATCTTAGAGC" /> -->
+    <!--                 <has_line line="TTTGTCATCTTTCCTC" /> -->
+    <!--             </assert_contents> -->
+    <!--         </output> -->
+    <!--     </test> -->
     </tests>
     <help><![CDATA[
 **What it does**
