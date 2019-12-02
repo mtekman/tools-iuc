@@ -78,28 +78,28 @@
     #end if
 
     ## Droplet is the only mode available for now
-    --soloType CB_UMI_Simple
+    --soloType '$solotype.type'
 
     ## 1 - check length of barcode, 0 - do not check
     ## Good for checking custom chemistries
     --soloCBwhitelist '$soloCBwhitelist'
     --soloBarcodeReadLength '$solo.soloBarcodeReadLength'
 
-    #if str($solo.params.chemistry) == "CR2":
+    #if str($solotype.params.chemistry) == "CR2":
     --soloCBstart 1
     --soloCBlen 16
     --soloUMIstart 17
     --soloUMIlen 10
-    #else if str($solo.params.chemistry) == "CR3":
+    #else if str($solotype.params.chemistry) == "CR3":
     --soloCBstart 1
     --soloCBlen 16
     --soloUMIstart 17
     --soloUMIlen 12
-    #else if str($solo.params.chemistry) == "custom":
-    --soloCBstart '$solo.params.soloCBstart'
-    --soloCBlen '$solo.params.soloCBlen'
-    --soloUMIstart '$solo.params.soloUMIstart'
-    --soloUMIlen '$solo.params.soloUMIlen'
+    #else if str($solotype.params.chemistry) == "custom":
+    --soloCBstart '$solotype.params.soloCBstart'
+    --soloCBlen '$solotype.params.soloCBlen'
+    --soloUMIstart '$solotype.params.soloUMIstart'
+    --soloUMIlen '$solotype.params.soloUMIlen'
     #end if
 
     --soloStrand '$solo.soloStrand'
@@ -136,7 +136,7 @@
         <param format="txt,tsv" argument="--soloCBwhitelist" type="data" label="RNA-Seq Cell Barcode Whitelist" />
         <expand macro="refgenomehandling" />
         <conditional name="solotype" >
-            <param argument="--soloType" type="select" label="Type of scRNA-seq"
+            <param argument="--soloType" name="type" type="select" label="Type of scRNA-seq"
                help="Droplet assumes 1 UMI and 1 Cell Barcode of fixed length in read2 (e.g. Drop-seq and 10X Chromium). Complex assumes 1 UMI of fixed length, but multiple Cell Barcodes of varying length with adapter sequences in read2 (e.g. inDrop)." >
                 <option value="CB_UMI_Simple">Droplet</option>
                 <option value="CB_UMI_Complex">Complex</option>
@@ -169,7 +169,7 @@
                 </repeat>
             </when>
         </conditional>
-        <section name="solo" title="Advanced Settings" expanded="true">
+        <section name="solo" title="Advanced Settings" expanded="false">
             <param argument="--soloAdapterSequence" type="text" value="-" label="Adapter sequence to anchor barcodes" >
                 <expand macro="sanitizer_adapter" />
             </param>
@@ -200,7 +200,7 @@
             <param argument="--soloBarcodeReadLength" type="boolean" truevalue="1" falsevalue="0" checked="true" label="Barcode Size is same size of the Read"
                    help="Disable this if your R1 barcodes contain poly-T bases after the barcode sequence." />
         </section>
-        <section name="filter" title="Filter Settings" expanded="true" >
+        <section name="filter" title="Filter Settings" expanded="false" >
             <param argument="--soloUMIfiltering" type="select" label="Type of UMI filtering"
                    help="Basic filtering removes UMIs with N and homopolymers (CellRanger 2.2.0). &lt;br /&gt; Multi Gene filtering removes the lower-count of UMIs that map to more than one gene (CellRanger 3.x.x)" >
                 <option value="-" selected="true">Basic</option>
