@@ -872,7 +872,7 @@ with open('anndata_info.txt','w', encoding='utf-8') as ainfo:
     </xml>
     <xml name="param_palette">
         <param argument="palette" type="select" label="Colors to use for plotting categorical annotation groups" help="">
-            <option value="default">Default</option>
+            <option value="rainbow">Default</option>
             <expand macro="matplotlib_pyplot_colormap"/>
         </param>
     </xml>
